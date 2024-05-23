@@ -5,6 +5,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 // ********************************************************************************
 // Macros and Defines
@@ -20,7 +21,8 @@ void usart_putchar( char data );
 void usart_pstr (char *s);
 unsigned char usart_kbhit(void);
 int usart_putchar_printf(char var, FILE *stream);
-
+uint8_t UART_getString(uint8_t* buf);
+void UART_putString(uint8_t* buf);
 
 static FILE mystdout = FDEV_SETUP_STREAM(usart_putchar_printf, NULL, _FDEV_SETUP_WRITE);
 
@@ -76,3 +78,34 @@ void printf_init(void){
   // fire up the usart
   usart_init ( MYUBRR );
 }
+
+// reads a string until the first newline or 0
+// returns the size read
+uint8_t UART_getString(uint8_t* buf){
+  uint8_t* b0=buf; //beginning of buffer
+  while(1){
+    uint8_t c=usart_getchar();
+    *buf=c;
+    ++buf;
+    // reading a 0 terminates the string
+    if (c==0)
+      return buf-b0;
+    // reading a \n  or a \r return results
+    // in forcedly terminating the string
+    if(c=='\n'||c=='\r'){
+      *buf=0;
+      ++buf;
+      return buf-b0;
+    }
+  }
+}
+
+void UART_putString(uint8_t* buf){
+  while(*buf){
+    usart_putchar(*buf);
+    ++buf;
+  }
+}
+
+
+
