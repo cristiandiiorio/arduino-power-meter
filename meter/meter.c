@@ -7,46 +7,49 @@
 #include <time.h>
 #include "../avr_common/uart.h" // this includes the printf and initializes it
 
-#define ARRAY_SIZE 100000
+#define ARRAY_SIZE 1000
 
 typedef struct amp_value {
     int timestamp;
-    int current;
+    int current; //TODO: change to float (non so perche non riesco a stamparli)
 } amp_value;
 
+amp_value amp_array[ARRAY_SIZE];
 
 int main(void){
-  // this initializes the printf/uart thingies
   printf_init(); 
 
   srand(time(0));
 
-  // we connect the switch to pin 12
-  // that is the bit 6 of port b
-  
   const uint8_t mask=(1<<6);
-  // we configure the pin as input, clearing the bit 6
   DDRB &= ~mask;
   
-  // we enable pullup resistor on that pin
   PORTB |= mask;
   
   int absolute_time = 0;
 
-  while(1){
-    int key=(PINB&mask)==0; // we extract the bit value of the 6th bit
+  int amp_count = 0;
+
+  while(amp_count < 5){
+    int key=(PINB&mask)==0;
 
     if (key == 1){
       amp_value amp;
       amp.current = rand();
       amp.timestamp = absolute_time/1000;
-
       printf("current: %d, timestamp: %d\n", amp.current, amp.timestamp);
-
+      
+      amp_array[amp_count] = amp;
+      amp_count++;
     }
 
     _delay_ms(1000); // from delay.h, wait 1 sec
     absolute_time += 1000;
   }
-  
+
+  printf("Printing last 5 measurements\n");
+
+  for (int i = 0; i < amp_count; i++){
+    printf("current: %d, timestamp: %d\n", amp_array[i].current, amp_array[i].timestamp);
+  }
 }
