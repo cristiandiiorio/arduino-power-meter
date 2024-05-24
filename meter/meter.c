@@ -1,32 +1,18 @@
-#include <util/delay.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdint.h>
-#include <avr/io.h>
-#include <time.h>
-#include "my_uart.h" // this includes the UART_putString and initializes it
-
-#define ARRAY_SIZE 1000
-
-typedef struct amp_value {
-  int timestamp;
-  int current; //TODO: change to float (non so perche non riesco a stamparli)
-} amp_value;
-
-amp_value amp_array[ARRAY_SIZE];
+#include "meter.h"
 
 void UART_print_amp(amp_value amp) {
-  char output_str[30];  // Buffer to hold the formatted string
-  sprintf(output_str, "at time %ds current is %dA\n", amp.timestamp, amp.current);  // Format the string with timestamp and current values
-  UART_putString((uint8_t*)output_str);  // Pass the string to UART_putString
+  char output_str[30];
+  sprintf(output_str, "at time %ds current is %dA\n", amp.timestamp, amp.current);
+  UART_putString((uint8_t*)output_str);
 }
 
 int main(void){
+  //INITIALIZATION ZONE
   UART_init();
-
+  amp_value amp_array[ARRAY_SIZE];
   srand(time(0));
 
+  //MAIN
   const uint8_t mask=(1<<6);
   DDRB &= ~mask;
   
@@ -52,7 +38,7 @@ int main(void){
     absolute_time += 1000;
   }
 
-  UART_putString((uint8_t*)"Printing last 10 measurements\n");
+  UART_putString((uint8_t*)"Printing last 7 measurements\n");
 
   for (int i = 0; i < amp_count; i++){
     UART_print_amp(amp_array[i]);
