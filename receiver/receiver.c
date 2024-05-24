@@ -1,4 +1,4 @@
-#include "serial_linux.h"
+#include "receiver.h"
 
 int serial_set_interface_attribs(int fd, int speed, int parity) {
   struct termios tty;
@@ -68,6 +68,12 @@ int serial_open(const char* name) {
   return fd;
 }
 
+void deserialize_amp_value(uint8_t* buffer, amp_value* amp) {
+  printf("deserializing\n");
+  memcpy(&(amp->timestamp), buffer, sizeof(amp->timestamp));
+  memcpy(&(amp->current), buffer + sizeof(amp->timestamp), sizeof(amp->current));
+}
+
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
@@ -85,17 +91,18 @@ int main(int argc, const char** argv) {
 
   printf("in place\n");
   while(1) {
-    char buf[1024];
-    memset(buf, 0, 1024);
-    if (read_or_write) {
-      int nchars=read(fd, buf,1024);
-      printf("%s", buf);
-    } else {
-    //   cin.getline(buf, 1024);
-    //   int l=strlen(buf);
-    //   buf[l]='\n';
-    //   ++l;
-    //   write(fd, buf, l);
+    uint8_t buffer[sizeof(amp_value)];
+    int nchars=read(fd, buffer, sizeof(amp_value));
+    if (nchars == sizeof(amp_value)) {
+      amp_value amp;
+      deserialize_amp_value(buffer, &amp);
+      printf("Received amp_value: timestamp = %d, current = %d\n", amp.timestamp, amp.current);
     }
+    else if (nchars < 0) {
+      printf("Error reading from serial: %d\n", errno);
+      } else {
+      printf("Read %d bytes, expected %lu bytes\n", nchars, sizeof(amp_value));
+      }
+        
   }
 }

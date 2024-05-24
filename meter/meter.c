@@ -6,12 +6,9 @@ void UART_print_amp(amp_value amp) {
   UART_putString((uint8_t*)output_str);
 }
 
-//binary
-void UART_send_amp(amp_value amp) {
-  uint8_t* data = (uint8_t*)&amp;
-  for (size_t i = 0; i < sizeof(amp); i++) {
-    UART_putChar(data[i]);
-  }
+void serialize_amp_value(amp_value amp, uint8_t* buffer) {
+  memcpy(buffer, &(amp.timestamp), sizeof(amp.timestamp));
+  memcpy(buffer + sizeof(amp.timestamp), &(amp.current), sizeof(amp.current));
 }
 
 int main(void){
@@ -29,7 +26,7 @@ int main(void){
   DDRB &= ~mask;
   PORTB |= mask;
 
-  UART_putString((uint8_t*)"Starting\n");
+  // UART_putString((uint8_t*)"Starting\n");
 
   //simulating normal operations then an interrupt comes at 7th measurement  
   while(amp_count < 7){
@@ -37,10 +34,12 @@ int main(void){
 
     if (key == 1){
       amp_value amp;
-      amp.current = rand();
       amp.timestamp = absolute_time/1000;
-      UART_print_amp(amp);
-      //UART_send_amp(amp);
+      amp.current = rand();
+      //UART_print_amp(amp);
+      uint8_t buffer[sizeof(amp_value)];
+      serialize_amp_value(amp, buffer);
+      UART_putString(buffer);
 
       amp_array[amp_count] = amp;
       amp_count++;
@@ -50,10 +49,12 @@ int main(void){
     absolute_time += 1000;
   }
 
-  UART_putString((uint8_t*)"Printing last 7 measurements\n");
+  // UART_putString((uint8_t*)"Printing last 7 measurements\n");
 
   for (int i = 0; i < amp_count; i++){
-    UART_print_amp(amp_array[i]);
-    //UART_send_amp(amp_array[i]);
+    // UART_print_amp(amp_array[i]);
+    uint8_t buffer[sizeof(amp_value)];
+    serialize_amp_value(amp_array[i], buffer);
+    UART_putString(buffer);
   }
 }

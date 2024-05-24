@@ -12,6 +12,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdint.h>
+
+typedef struct __attribute__((packed)) amp_value {
+  uint16_t timestamp;
+  uint16_t current; 
+} amp_value;
 
 //! returns the descriptor of a serial port
 int serial_open(const char* name);
