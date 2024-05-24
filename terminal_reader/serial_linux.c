@@ -1,15 +1,4 @@
 #include "serial_linux.h"
-#include <errno.h>
-#include <termios.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <iostream>
-#include <string> 
 
 int serial_set_interface_attribs(int fd, int speed, int parity) {
   struct termios tty;
@@ -102,11 +91,11 @@ int main(int argc, const char** argv) {
       int nchars=read(fd, buf,1024);
       printf("%s", buf);
     } else {
-      cin.getline(buf, 1024);
-      int l=strlen(buf);
-      buf[l]='\n';
-      ++l;
-      write(fd, buf, l);
+    //   cin.getline(buf, 1024);
+    //   int l=strlen(buf);
+    //   buf[l]='\n';
+    //   ++l;
+    //   write(fd, buf, l);
     }
   }
 }

@@ -46,8 +46,8 @@ int main(void){
       amp_value amp;
       amp.current = rand();
       amp.timestamp = absolute_time/1000;
-      //UART_print_amp(amp);
-      UART_send_amp(amp);
+      UART_print_amp(amp);
+      //UART_send_amp(amp);
 
       amp_array[amp_count] = amp;
       amp_count++;
@@ -60,7 +60,7 @@ int main(void){
   UART_putString((uint8_t*)"Printing last 7 measurements\n");
 
   for (int i = 0; i < amp_count; i++){
-    //UART_print_amp(amp_array[i]);
-    UART_send_amp(amp_array[i]);
+    UART_print_amp(amp_array[i]);
+    //UART_send_amp(amp_array[i]);
   }
 }
