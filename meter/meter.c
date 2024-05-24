@@ -12,15 +12,16 @@ int main(void){
   amp_value amp_array[ARRAY_SIZE];
   srand(time(0));
 
-  //MAIN
-  const uint8_t mask=(1<<6);
-  DDRB &= ~mask;
-  
-  PORTB |= mask;
-  
   uint16_t absolute_time = 0;
   uint16_t amp_count = 0;
 
+  //MAIN
+  //simulating the sensor
+  const uint8_t mask=(1<<6);
+  DDRB &= ~mask;
+  PORTB |= mask;
+
+  //simulating normal operations then an interrupt comes at 7th measurement  
   while(amp_count < 7){
     int key=(PINB&mask)==0;
 
