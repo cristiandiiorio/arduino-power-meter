@@ -8,7 +8,7 @@
 
 #define ARRAY_SIZE 1000
 
-typedef struct amp_value {
+typedef struct __attribute__((packed)) amp_value {
   uint16_t timestamp;
   uint16_t current; 
 } amp_value;
