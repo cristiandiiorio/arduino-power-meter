@@ -58,24 +58,10 @@ int serial_open(const char* name) {
   return fd;
 }
 
-int UART_receive_amp(int fd, amp_value* amp) {
-  uint8_t* data = (uint8_t*)amp;
-  size_t total_read = 0;
-  while (total_read < sizeof(amp_value)) {
-    ssize_t n = read(fd, data + total_read, sizeof(amp_value) - total_read);
-    if (n > 0) {
-      total_read += n;
-    } else if (n < 0) {
-      printf("Error reading from serial port\n");
-      return 0;
-    }
-  }
-  return 1;
-}
-
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
+
 int main(int argc, const char** argv) {
   if (argc<4) {
     printf("serial_linux <serial_file> <baudrate> <read=1, write=0>\n");
@@ -96,12 +82,11 @@ int main(int argc, const char** argv) {
       int nchars=read(fd, buf,1024);
       printf("%s", buf);
     } else {
-      printf("WIP\n");
-      // cin.getline(buf, 1024);
-      // int l=strlen(buf);
-      // buf[l]='\n';
-      // ++l;
-      // write(fd, buf, l);
+      cin.getline(buf, 1024);
+      int l=strlen(buf);
+      buf[l]='\n';
+      ++l;
+      write(fd, buf, l);
     }
   }
 }
