@@ -2,24 +2,16 @@
 // ********************************************************************************
 // Includes
 // ********************************************************************************
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
-#include <stdbool.h>
+
 // ********************************************************************************
 // Macros and Defines
 // ********************************************************************************
-#define BAUD 19600
+#define BAUD 19200
 #define MYUBRR F_CPU/16/BAUD-1
 // ********************************************************************************
 // Function Prototypes
 // ********************************************************************************
-void usart_init(uint16_t ubrr);
-char usart_getchar( void );
-void usart_putchar( char data );
-void usart_pstr (char *s);
-unsigned char usart_kbhit(void);
-int usart_putchar_printf(char var, FILE *stream);
+
 
 
 static FILE mystdout = FDEV_SETUP_STREAM(usart_putchar_printf, NULL, _FDEV_SETUP_WRITE);
@@ -27,8 +19,9 @@ static FILE mystdout = FDEV_SETUP_STREAM(usart_putchar_printf, NULL, _FDEV_SETUP
 // ********************************************************************************
 // usart Related
 // ********************************************************************************
-void usart_init( uint16_t ubrr) {
+void usart_init() {
     // Set baud rate
+    uint16_t ubrr = MYUBRR;
     UBRR0H = (uint8_t)(ubrr>>8);
     UBRR0L = (uint8_t)ubrr;
 
@@ -74,5 +67,7 @@ void printf_init(void){
   stdout = &mystdout;
   
   // fire up the usart
-  usart_init ( MYUBRR );
+  usart_init ();
 }
+
+
