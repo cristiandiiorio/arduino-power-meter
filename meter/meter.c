@@ -17,13 +17,9 @@ typedef struct amp_value {
 amp_value amp_array[ARRAY_SIZE];
 
 void UART_print_amp(amp_value amp) {
-  char current_str[12];  // Buffer to hold the string representation of amp.current
-  sprintf(current_str, "%dA\n", amp.current);  // Convert amp.current to string and append 'A' with a newline
-  UART_putString((uint8_t*)current_str);  // Pass the string to UART_putString
-
-  char timestamp_str[12];  // Buffer to hold the string representation of amp.timestamp
-  sprintf(timestamp_str, "%ds\n", amp.timestamp);  // Convert amp.timestamp to string and append 's' with a newline
-  UART_putString((uint8_t*)timestamp_str);  // Pass the string to UART_putString
+  char output_str[30];  // Buffer to hold the formatted string
+  sprintf(output_str, "at time %ds current is %dA\n", amp.timestamp, amp.current);  // Format the string with timestamp and current values
+  UART_putString((uint8_t*)output_str);  // Pass the string to UART_putString
 }
 
 int main(void){
@@ -39,7 +35,7 @@ int main(void){
   uint16_t absolute_time = 0;
   uint16_t amp_count = 0;
 
-  while(amp_count < 10){
+  while(amp_count < 7){
     int key=(PINB&mask)==0;
 
     if (key == 1){
