@@ -6,9 +6,12 @@ BINS=serial_linux
 
 all: $(BINS)
 
-serial_linux:	serial_linux.cpp
+serial_linux:	serial_linux.c
 	$(CC) -$(CCOPTS) -o $@ $^  
 
 clean:
 	rm -rf *~ $(BINS) *.pgm
+
+
+include ../avr_common/avr.mk
 

@@ -14,6 +14,13 @@ void UART_send_amp(amp_value amp) {
   }
 }
 
+void UART_read_amp(amp_value* amp) {
+  uint8_t* data = (uint8_t*)amp;
+  for (size_t i = 0; i < sizeof(amp_value); i++) {
+    data[i] = UART_getChar();
+  }
+}
+
 int main(void){
   //INITIALIZATION ZONE
   UART_init();

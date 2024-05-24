@@ -1,15 +1,6 @@
 #include "serial_linux.h"
-#include <errno.h>
-#include <termios.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <iostream>
-#include <string> 
+
+using namespace std;
 
 int serial_set_interface_attribs(int fd, int speed, int parity) {
   struct termios tty;
@@ -19,26 +10,14 @@ int serial_set_interface_attribs(int fd, int speed, int parity) {
     return -1;
   }
   switch (speed){
-  case 19200:
-    speed=B19200;
-    break;
-  case 57600:
-    speed=B57600;
-    break;
-  case 115200:
-    speed=B115200;
-    break;
-  case 230400:
-    speed=B230400;
-    break;
-  case 576000:
-    speed=B576000;
-    break;
-  case 921600:
-    speed=B921600;
-    break;
+    case 19200: speed = B19200; break;
+    case 57600: speed = B57600; break;
+    case 115200: speed = B115200; break;
+    case 230400: speed = B230400; break;
+    case 576000: speed = B576000; break;
+    case 921600: speed = B921600; break;
   default:
-    printf("cannot sed baudrate %d\n", speed);
+    printf("cannot set baudrate %d\n", speed);
     return -1;
   }
   cfsetospeed (&tty, speed);
@@ -82,6 +61,8 @@ int serial_open(const char* name) {
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
+
+
 int main(int argc, const char** argv) {
   if (argc<4) {
     printf("serial_linux <serial_file> <baudrate> <read=1, write=0>\n");
@@ -96,17 +77,20 @@ int main(int argc, const char** argv) {
 
   printf("in place\n");
   while(1) {
-    char buf[1024];
-    memset(buf, 0, 1024);
+    uint8_t* data;
+    memset(data, 0, sizeof(amp_value));
     if (read_or_write) {
-      int nchars=read(fd, buf,1024);
-      printf("%s", buf);
+      for (size_t i = 0; i < sizeof(amp_value); i++) {
+        data[i] = UART_getChar();
+      }
+      printf("at time %ds current is %dA\n", data.timestamp, data.current);
+
     } else {
-      cin.getline(buf, 1024);
-      int l=strlen(buf);
-      buf[l]='\n';
-      ++l;
-      write(fd, buf, l);
+      // cin.getline(buf, 1024);
+      // int l=strlen(buf);
+      // buf[l]='\n';
+      // ++l;
+      // write(fd, buf, l);
     }
   }
 }
