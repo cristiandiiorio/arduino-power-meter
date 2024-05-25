@@ -36,7 +36,7 @@ int main(void){
     if (key == 1){
       amp_value amp = {0, 0};
       amp.timestamp = absolute_time/1000;
-      amp.current = 3;
+      amp.current = 9;
       
       /*normal*/
       // UART_print_amp(amp);

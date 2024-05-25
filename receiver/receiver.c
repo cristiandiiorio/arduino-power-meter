@@ -68,6 +68,50 @@ int serial_open(const char* name) {
   return fd;
 }
 
+int UART_read(int fd, uint16_t *value) {
+  uint8_t buffer[sizeof(uint16_t)];
+  size_t total_bytes_read = 0;
+  ssize_t bytes_read;
+
+  // Continuously read until we have the required number of bytes
+  while (total_bytes_read < sizeof(uint16_t)) {
+    bytes_read = read(fd, buffer + total_bytes_read, sizeof(uint16_t) - total_bytes_read);
+    if (bytes_read < 0) {
+      perror("Error reading from UART");
+      return -1;
+    }
+    total_bytes_read += bytes_read;
+  }
+
+
+  // Debug print to see the raw bytes read
+  printf("Raw bytes read: %02x %02x\n", buffer[0], buffer[1]);
+
+  // Copy the binary data into the amp_value struct
+  *value =  buffer[0]  | (buffer[1] << 8); // Assuming little-endian format
+  return 0;
+}
+
+// Function to read and deserialize amp_value struct from a file descriptor
+int UART_read_amp_binary(int fd, amp_value *amp) {
+    uint16_t timestamp;
+    uint16_t current;
+    // Read timestamp
+    if (UART_read(fd, &timestamp) != 0) {
+        return -1;
+    }
+
+    // Read current
+    if (UART_read(fd, &current) != 0) {
+        return -1;
+    }
+
+    amp->timestamp = timestamp;
+    amp->current = current;
+
+    return 0;
+}
+
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
@@ -86,27 +130,26 @@ int main(int argc, const char** argv) {
 
   printf("in place\n");
 
-  while(1) {
-    amp_value amp = {0, 0};
+  amp_value amp = {0, 0};
+  while (1) {
+    char buf[1024];
+    memset(buf, 0, 1024);
     if (read_or_write) {
-      int nchars = read(fd, &amp.timestamp, sizeof(amp.timestamp));
-      if (nchars == sizeof(amp.timestamp)) {
-      nchars = read(fd, &amp.current, sizeof(amp.current));
-      if (nchars == sizeof(amp.current)) {
-        printf("at time %ds current is %dA\n", amp.timestamp, amp.current);
-      } else {
-        printf("Error reading current\n");
+      // Read and deserialize amp_value from fd
+      if (UART_read_amp_binary(fd, &amp) == 0) {
+        // Print the deserialized values
+        printf("Timestamp: %u\n", amp.timestamp);
+        printf("Current: %u\n", amp.current);
       }
-      } else {
-      printf("Error reading timestamp\n");
-      }
-    }
-    else {
-    //   cin.getline(buf, 1024);
-    //   int l=strlen(buf);
-    //   buf[l]='\n';
-    //   ++l;
-    //   write(fd, buf, l);
+    } else {
+      // Write operation (commented out as per the original code)
+      // cin.getline(buf, 1024);
+      // int l = strlen(buf);
+      // buf[l] = '\n';
+      // ++l;
+      // write(fd, buf, l);
     }
   }
+
+  return 0;
 }
