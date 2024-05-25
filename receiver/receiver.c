@@ -87,7 +87,6 @@ amp_value UART_read_amp(int fd) {
   return amp;
 }
 
-
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */

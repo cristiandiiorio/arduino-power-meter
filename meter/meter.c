@@ -36,12 +36,12 @@ int main(void){
   _delay_ms(1000); // from delay.h, wait 1 sec
 
   //simulating normal operations then an interrupt comes at 7th measurement  
-  while(amp_count < 7){
+  while(amp_count < 5){
     int key=(PINB&mask)==0;
 
     if (key == 1){
       amp_value amp = {0, 0};
-      amp.current = rand() % 100;
+      amp.current = rand() % 1000;
       amp.timestamp = absolute_time/1000;
       /*normal*/
       // UART_print_amp(amp);
@@ -56,13 +56,4 @@ int main(void){
     _delay_ms(1000); // from delay.h, wait 1 sec
     absolute_time += 1000;
   }
-
-  // UART_putString((uint8_t*)"Printing last 7 measurements\n");
-
-  // for (int i = 0; i < amp_count; i++){
-  //   // UART_print_amp(amp_array[i]);
-  //   uint8_t buffer[sizeof(amp_value)];
-  //   serialize_amp_value(amp_array[i], buffer);
-  //   UART_putString(buffer);
-  // }
 }
