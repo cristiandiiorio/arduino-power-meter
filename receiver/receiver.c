@@ -68,7 +68,11 @@ int serial_open(const char* name) {
   return fd;
 }
 
-void UART_read(int fd) {
+void print_amp(amp_value amp) {
+  printf("at time %ds current is %dA\n", amp.timestamp, amp.current);
+}
+
+amp_value UART_read_amp(int fd) {
   int bytes_read = 0;
   int total_bytes_read = 0;
   amp_value amp = {0, 0};
@@ -80,12 +84,9 @@ void UART_read(int fd) {
     perror("read");
   }
 
-  print_amp(amp);
+  return amp;
 }
 
-void print_amp(amp_value amp) {
-  printf("at time %ds current is %dA\n", amp.timestamp, amp.current);
-}
 
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
@@ -105,10 +106,10 @@ int main(int argc, const char** argv) {
 
   printf("in place\n");
 
-  amp_value amp = {0, 0};
   while (1) {
     if (read_or_write) {
-      UART_read(fd);
+      amp_value amp = UART_read_amp(fd);
+      print_amp(amp);
     } else {
       // cin.getline(buf, 1024);
       // int l = strlen(buf);
