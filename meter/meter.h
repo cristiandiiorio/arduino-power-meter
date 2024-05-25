@@ -10,10 +10,10 @@
 #define ARRAY_SIZE 1000
 
 typedef struct __attribute__((packed)) amp_value {
-  uint16_t timestamp;
   uint16_t current; 
+  uint16_t timestamp;
 } amp_value;
 
 
 void UART_print_amp(amp_value amp);
-void UART_print_amp_binary(amp_value amp);
+

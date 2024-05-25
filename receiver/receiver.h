@@ -15,8 +15,8 @@
 #include <stdint.h>
 
 typedef struct __attribute__((packed)) amp_value {
-  uint16_t timestamp;
   uint16_t current; 
+  uint16_t timestamp;
 } amp_value;
 
 //! returns the descriptor of a serial port

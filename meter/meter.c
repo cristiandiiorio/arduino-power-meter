@@ -6,9 +6,15 @@ void UART_print_amp(amp_value amp) {
   UART_putString((uint8_t*)output_str);
 }
 
-void UART_print_amp_binary(amp_value amp) {
-  UART_putString((uint8_t *)&(amp.timestamp));
-  UART_putString((uint8_t *)&(amp.current));
+void UART_print_amp_binary(amp_value *amp) {
+  uint16_t* amp_ptr = amp;
+  
+  int i = 0;
+  while (i < sizeof(uint16_t*)){
+    UART_putChar(amp_ptr[i]);
+    i++;
+  }
+
 }
 
 int main(void){
@@ -35,14 +41,14 @@ int main(void){
 
     if (key == 1){
       amp_value amp = {0, 0};
+      amp.current = 256;
       amp.timestamp = absolute_time/1000;
-      amp.current = 9;
       
       /*normal*/
       // UART_print_amp(amp);
       
       /*BINARY*/
-      UART_print_amp_binary(amp);
+      UART_print_amp_binary(&amp);
 
       amp_array[amp_count] = amp;
       amp_count++;

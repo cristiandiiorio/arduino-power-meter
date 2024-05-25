@@ -83,9 +83,12 @@ int UART_read(int fd, uint16_t *value) {
     total_bytes_read += bytes_read;
   }
 
-
   // Debug print to see the raw bytes read
-  printf("Raw bytes read: %02x %02x\n", buffer[0], buffer[1]);
+  printf("Raw bytes read: ");
+  for (size_t i = 0; i < sizeof(uint16_t); i++) {
+    printf("%02x ", buffer[i]);
+  }
+  printf("\n");
 
   // Copy the binary data into the amp_value struct
   *value =  buffer[0]  | (buffer[1] << 8); // Assuming little-endian format
