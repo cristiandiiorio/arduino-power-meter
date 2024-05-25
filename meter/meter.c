@@ -23,24 +23,24 @@ int main(void){
   amp_value amp_array[ARRAY_SIZE];
   srand(time(0));
 
-  uint16_t absolute_time = 1000;
-  uint16_t amp_count = 0;
+  //ONLINE MODE
+  uint16_t online_mode_time;
+  online_mode_time = 3; // USER CHOOSES IT
+  online_mode_time = 1000 * online_mode_time; // convert to ms
 
   //MAIN
   //simulating the sensor
   const uint8_t mask=(1<<6);
   DDRB &= ~mask;
   PORTB |= mask;
-
-  _delay_ms(1000); // from delay.h, wait 1 sec
-
-  while(amp_count < 5){
+  uint16_t amp_count = 1;
+  while(amp_count < 1000){
     int key=(PINB&mask)==0;
 
     if (key == 1){
       amp_value amp = {0, 0};
       amp.current = rand() % 1000;
-      amp.timestamp = absolute_time/1000;
+      amp.timestamp = (online_mode_time / 1000) * amp_count;
       /*normal*/
       // UART_print_amp(amp);
       
@@ -51,7 +51,7 @@ int main(void){
       amp_count++;
     }
 
-    _delay_ms(1000); // from delay.h, wait 1 sec
-    absolute_time += 1000;
+    _delay_ms(online_mode_time);
+
   }
 }
