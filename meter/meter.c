@@ -32,10 +32,8 @@ int main(void){
   DDRB &= ~mask;
   PORTB |= mask;
 
-  // UART_putString((uint8_t*)"Starting\n");
   _delay_ms(1000); // from delay.h, wait 1 sec
 
-  //simulating normal operations then an interrupt comes at 7th measurement  
   while(amp_count < 5){
     int key=(PINB&mask)==0;
 

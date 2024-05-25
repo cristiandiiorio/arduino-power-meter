@@ -16,4 +16,5 @@ typedef struct __attribute__((packed)) amp_value {
 
 
 void UART_print_amp(amp_value amp);
+void UART_print_amp_binary(amp_value *amp);
 
