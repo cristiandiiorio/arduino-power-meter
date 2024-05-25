@@ -7,8 +7,8 @@ void UART_print_amp(amp_value amp) {
 }
 
 void serialize_amp_value(amp_value amp, uint8_t* buffer) {
-  memcpy(buffer, &(amp.current), sizeof(amp.current));
-  memcpy(buffer + sizeof(amp.current), &(amp.timestamp), sizeof(amp.timestamp));
+  memcpy(buffer, &(amp.timestamp), sizeof(amp.timestamp));
+  memcpy(buffer + sizeof(amp.timestamp), &(amp.current), sizeof(amp.current));
 }
 
 int main(void){
@@ -36,11 +36,17 @@ int main(void){
       amp_value amp;
       amp.timestamp = absolute_time/1000;
       amp.current = 2;
-      //UART_print_amp(amp);
-      uint8_t buffer[sizeof(amp_value)];
-      serialize_amp_value(amp, buffer);
-      UART_putString((uint8_t *)buffer);
+      
+      /*normal*/
+      // UART_print_amp(amp);
+      
+      /*BINARY*/ 
+      // uint8_t buffer[sizeof(amp_value)];
+      // serialize_amp_value(amp, buffer);
+      UART_putString((uint8_t *)&(amp.timestamp));
+      UART_putString((uint8_t *)&(amp.current));
 
+      
       amp_array[amp_count] = amp;
       amp_count++;
     }
