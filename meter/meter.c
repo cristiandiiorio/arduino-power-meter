@@ -6,9 +6,9 @@ void UART_print_amp(amp_value amp) {
   UART_putString((uint8_t*)output_str);
 }
 
-void serialize_amp_value(amp_value amp, uint8_t* buffer) {
-  memcpy(buffer, &(amp.timestamp), sizeof(amp.timestamp));
-  memcpy(buffer + sizeof(amp.timestamp), &(amp.current), sizeof(amp.current));
+void UART_print_amp_binary(amp_value amp) {
+  UART_putString((uint8_t *)&(amp.timestamp));
+  UART_putString((uint8_t *)&(amp.current));
 }
 
 int main(void){
@@ -17,7 +17,7 @@ int main(void){
   amp_value amp_array[ARRAY_SIZE];
   srand(time(0));
 
-  uint16_t absolute_time = 0;
+  uint16_t absolute_time = 1000;
   uint16_t amp_count = 0;
 
   //MAIN
@@ -27,26 +27,23 @@ int main(void){
   PORTB |= mask;
 
   // UART_putString((uint8_t*)"Starting\n");
+  _delay_ms(1000); // from delay.h, wait 1 sec
 
   //simulating normal operations then an interrupt comes at 7th measurement  
   while(amp_count < 7){
     int key=(PINB&mask)==0;
 
     if (key == 1){
-      amp_value amp;
+      amp_value amp = {0, 0};
       amp.timestamp = absolute_time/1000;
-      amp.current = 2;
+      amp.current = 3;
       
       /*normal*/
       // UART_print_amp(amp);
       
-      /*BINARY*/ 
-      // uint8_t buffer[sizeof(amp_value)];
-      // serialize_amp_value(amp, buffer);
-      UART_putString((uint8_t *)&(amp.timestamp));
-      UART_putString((uint8_t *)&(amp.current));
+      /*BINARY*/
+      UART_print_amp_binary(amp);
 
-      
       amp_array[amp_count] = amp;
       amp_count++;
     }

@@ -68,15 +68,10 @@ int serial_open(const char* name) {
   return fd;
 }
 
-void deserialize_amp_value(uint8_t* buffer, amp_value* amp) {
-  printf("deserializing\n");
-  memcpy(&(amp->timestamp), buffer, sizeof(amp->timestamp));
-  memcpy(&(amp->current), buffer + sizeof(amp->timestamp), sizeof(amp->current));
-}
-
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
+
 int main(int argc, const char** argv) {
   if (argc<4) {
     printf("serial_linux <serial_file> <baudrate> <read=1, write=0>\n");
@@ -90,23 +85,28 @@ int main(int argc, const char** argv) {
   serial_set_blocking(fd, 1);
 
   printf("in place\n");
-  int bytes_read=0;
-
-  uint8_t buffer[sizeof(amp_value)];
 
   while(1) {
-    int nchars=read(fd, buffer + bytes_read, sizeof(amp_value) - bytes_read);
-    if (nchars > 0) {
-      bytes_read += nchars;
-      if (bytes_read == sizeof(amp_value)) {
-        amp_value amp;
-        deserialize_amp_value(buffer, &amp);
-        printf("Received amp_value: timestamp = %d, current = %d\n", amp.timestamp, amp.current);
-        bytes_read = 0;  // Reset for the next amp_value
+    amp_value amp = {0, 0};
+    if (read_or_write) {
+      int nchars = read(fd, &amp.timestamp, sizeof(amp.timestamp));
+      if (nchars == sizeof(amp.timestamp)) {
+      nchars = read(fd, &amp.current, sizeof(amp.current));
+      if (nchars == sizeof(amp.current)) {
+        printf("at time %ds current is %dA\n", amp.timestamp, amp.current);
+      } else {
+        printf("Error reading current\n");
+      }
+      } else {
+      printf("Error reading timestamp\n");
       }
     }
-    else if (nchars < 0) {
-      printf("Error reading from serial: %d\n", errno);
+    else {
+    //   cin.getline(buf, 1024);
+    //   int l=strlen(buf);
+    //   buf[l]='\n';
+    //   ++l;
+    //   write(fd, buf, l);
     }
   }
 }
