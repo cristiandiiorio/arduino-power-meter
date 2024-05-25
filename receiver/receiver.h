@@ -27,3 +27,7 @@ int serial_set_interface_attribs(int fd, int speed, int parity);
 
 //! puts the port in blocking/nonblocking mode
 void serial_set_blocking(int fd, int should_block);
+
+void print_amp(amp_value amp);
+
+void UART_read(int fd);

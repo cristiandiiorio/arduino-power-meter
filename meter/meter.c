@@ -7,10 +7,10 @@ void UART_print_amp(amp_value amp) {
 }
 
 void UART_print_amp_binary(amp_value *amp) {
-  uint16_t* amp_ptr = amp;
+  uint8_t* amp_ptr = (uint8_t*) amp;
   
   int i = 0;
-  while (i < sizeof(uint16_t*)){
+  while (i < sizeof(amp_value)){
     UART_putChar(amp_ptr[i]);
     i++;
   }
@@ -41,9 +41,8 @@ int main(void){
 
     if (key == 1){
       amp_value amp = {0, 0};
-      amp.current = 256;
+      amp.current = rand() % 100;
       amp.timestamp = absolute_time/1000;
-      
       /*normal*/
       // UART_print_amp(amp);
       
