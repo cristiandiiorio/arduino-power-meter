@@ -7,8 +7,8 @@ void UART_print_amp(amp_value amp) {
 }
 
 void serialize_amp_value(amp_value amp, uint8_t* buffer) {
-  memcpy(buffer, &(amp.timestamp), sizeof(amp.timestamp));
-  memcpy(buffer + sizeof(amp.timestamp), &(amp.current), sizeof(amp.current));
+  memcpy(buffer, &(amp.current), sizeof(amp.current));
+  memcpy(buffer + sizeof(amp.current), &(amp.timestamp), sizeof(amp.timestamp));
 }
 
 int main(void){
@@ -35,11 +35,11 @@ int main(void){
     if (key == 1){
       amp_value amp;
       amp.timestamp = absolute_time/1000;
-      amp.current = rand();
+      amp.current = 2;
       //UART_print_amp(amp);
       uint8_t buffer[sizeof(amp_value)];
       serialize_amp_value(amp, buffer);
-      UART_putString(buffer);
+      UART_putString((uint8_t *)buffer);
 
       amp_array[amp_count] = amp;
       amp_count++;
@@ -51,10 +51,10 @@ int main(void){
 
   // UART_putString((uint8_t*)"Printing last 7 measurements\n");
 
-  for (int i = 0; i < amp_count; i++){
-    // UART_print_amp(amp_array[i]);
-    uint8_t buffer[sizeof(amp_value)];
-    serialize_amp_value(amp_array[i], buffer);
-    UART_putString(buffer);
-  }
+  // for (int i = 0; i < amp_count; i++){
+  //   // UART_print_amp(amp_array[i]);
+  //   uint8_t buffer[sizeof(amp_value)];
+  //   serialize_amp_value(amp_array[i], buffer);
+  //   UART_putString(buffer);
+  // }
 }

@@ -90,19 +90,23 @@ int main(int argc, const char** argv) {
   serial_set_blocking(fd, 1);
 
   printf("in place\n");
+  int bytes_read=0;
+
+  uint8_t buffer[sizeof(amp_value)];
+
   while(1) {
-    uint8_t buffer[sizeof(amp_value)];
-    int nchars=read(fd, buffer, sizeof(amp_value));
-    if (nchars == sizeof(amp_value)) {
-      amp_value amp;
-      deserialize_amp_value(buffer, &amp);
-      printf("Received amp_value: timestamp = %d, current = %d\n", amp.timestamp, amp.current);
+    int nchars=read(fd, buffer + bytes_read, sizeof(amp_value) - bytes_read);
+    if (nchars > 0) {
+      bytes_read += nchars;
+      if (bytes_read == sizeof(amp_value)) {
+        amp_value amp;
+        deserialize_amp_value(buffer, &amp);
+        printf("Received amp_value: timestamp = %d, current = %d\n", amp.timestamp, amp.current);
+        bytes_read = 0;  // Reset for the next amp_value
+      }
     }
     else if (nchars < 0) {
       printf("Error reading from serial: %d\n", errno);
-      } else {
-      printf("Read %d bytes, expected %lu bytes\n", nchars, sizeof(amp_value));
-      }
-        
+    }
   }
 }
