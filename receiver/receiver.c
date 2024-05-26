@@ -92,31 +92,43 @@ amp_value UART_read_amp(int fd) {
 */
 
 int main(int argc, const char** argv) {
-  if (argc<4) {
-    printf("serial_linux <serial_file> <baudrate> <read=1, write=0>\n");
+  if (argc < 3) {
+    printf("serial_linux <serial_file> <baudrate>\n");
   }
   const char* serial_device=argv[1];
   int baudrate=atoi(argv[2]);
-  int read_or_write=atoi(argv[3]);
 
-  int fd=serial_open(serial_device);
+  char mode;
+  printf("o for online mode, q for query mode, c for clearing mode: ");
+  scanf("%c", &mode);
+
+  int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
-  serial_set_blocking(fd, 1);
+  serial_set_blocking(fd, 0);
 
-  printf("in place\n");
+  // online mode
+  if (mode == 'o') {
+    // user input
+    int sampling_interval;
+    printf("desired sampling interval: ");
+    scanf("%d", &sampling_interval);
+    //send special_message to arduino
+    special_message sm = {sampling_interval, mode};
+    write(fd, &sm, sizeof(sm));
 
-  while (1) {
-    if (read_or_write) {
-      amp_value amp = UART_read_amp(fd);
-      print_amp(amp);
-    } else {
-      // cin.getline(buf, 1024);
-      // int l = strlen(buf);
-      // buf[l] = '\n';
-      // ++l;
-      // write(fd, buf, l);
-    }
+    //read from arduino
+    amp_value amp = UART_read_amp(fd);
+    print_amp(amp);
+  } 
+  // query mode
+  else if (mode == 'q') { 
+
   }
+  // clearing mode
+  else if (mode == 'c') {
+    
+  }
+  
 
   return 0;
 }

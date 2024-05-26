@@ -14,7 +14,10 @@ typedef struct __attribute__((packed)) amp_value {
   uint16_t timestamp;
 } amp_value;
 
+typedef struct __attribute__((packed)) special_message {
+  int payload; 
+  char mode[1];
+} special_message;
 
-void UART_print_amp(amp_value amp);
 void UART_print_amp_binary(amp_value *amp);
 
