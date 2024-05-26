@@ -25,7 +25,7 @@ int main(void){
 
   //ONLINE MODE
   uint16_t online_mode_time;
-  online_mode_time = 3; // USER CHOOSES IT
+  online_mode_time = 1; // USER CHOOSES IT
   online_mode_time = 1000 * online_mode_time; // convert to ms
 
   //MAIN
@@ -39,7 +39,7 @@ int main(void){
 
     if (key == 1){
       amp_value amp = {0, 0};
-      amp.current = rand() % 1000;
+      amp.current = (float)rand() / RAND_MAX * 10.0;
       amp.timestamp = (online_mode_time / 1000) * amp_count;
       /*normal*/
       // UART_print_amp(amp);

@@ -69,7 +69,7 @@ int serial_open(const char* name) {
 }
 
 void print_amp(amp_value amp) {
-  printf("at time %ds current is %dA\n", amp.timestamp, amp.current);
+  printf("at time %ds current is %fA\n", amp.timestamp, amp.current);
 }
 
 amp_value UART_read_amp(int fd) {
