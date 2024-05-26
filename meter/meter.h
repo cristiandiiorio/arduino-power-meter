@@ -19,4 +19,8 @@ typedef struct __attribute__((packed)) special_message {
   char mode;
 } special_message;
 
+void UART_send_amp_binary(amp_value *amp);
+
+special_message UART_read_special_message();
+
 

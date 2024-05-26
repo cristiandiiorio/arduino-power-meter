@@ -113,10 +113,10 @@ int main(int argc, const char** argv) {
 
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
-  serial_set_blocking(fd, 0);
+  serial_set_blocking(fd, 1);
 
-  // online mode mode == 'o'
-  if (1) {
+  // online mode 
+  if (mode == 'o') {
     // user input
     int sampling_interval;
     printf("desired sampling interval: ");
@@ -125,9 +125,11 @@ int main(int argc, const char** argv) {
     special_message sm = {sampling_interval, mode};
     UART_send_special_message(fd, &sm);
 
-    //read from arduino
-    amp_value amp = UART_read_amp(fd);
-    print_amp(amp);
+    while(1){
+      //read from arduino
+      amp_value amp = UART_read_amp(fd);
+      print_amp(amp);
+    }
   } 
   // query mode
   else if (mode == 'q') { 
