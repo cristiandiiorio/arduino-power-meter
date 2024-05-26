@@ -21,8 +21,8 @@ typedef struct __attribute__((packed)) amp_value {
 
 
 typedef struct __attribute__((packed)) special_message {
-  int payload; 
-  char mode[1];
+  uint16_t payload; 
+  char mode;
 } special_message;
 
 //! returns the descriptor of a serial port

@@ -87,6 +87,15 @@ amp_value UART_read_amp(int fd) {
   return amp;
 }
 
+void UART_send_special_message(int fd, special_message *msg) {
+  uint8_t* msg_ptr = (uint8_t*) msg;
+  int i = 0;
+  while(i < sizeof(special_message)){
+    write(fd, &msg_ptr[i], sizeof(uint8_t));
+    i++;
+  }
+}
+
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
@@ -106,22 +115,15 @@ int main(int argc, const char** argv) {
   serial_set_interface_attribs(fd, baudrate, 0);
   serial_set_blocking(fd, 0);
 
-  // online mode
-  if (mode == 'o') {
+  // online mode mode == 'o'
+  if (1) {
     // user input
     int sampling_interval;
     printf("desired sampling interval: ");
     scanf("%d", &sampling_interval);
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
-
-    // send special_message to arduino
-    uint8_t* sm_ptr = (uint8_t*) &sm;
-    int i = 0;
-    while(i < sizeof(special_message)) {
-      write(fd, sm_ptr[i], 1);
-      i++;
-    }
+    UART_send_special_message(fd, &sm);
 
     //read from arduino
     amp_value amp = UART_read_amp(fd);
