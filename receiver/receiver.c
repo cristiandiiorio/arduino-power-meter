@@ -114,7 +114,14 @@ int main(int argc, const char** argv) {
     scanf("%d", &sampling_interval);
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
-    write(fd, &sm, sizeof(sm));
+
+    // send special_message to arduino
+    uint8_t* sm_ptr = (uint8_t*) &sm;
+    int i = 0;
+    while(i < sizeof(special_message)) {
+      write(fd, sm_ptr[i], 1);
+      i++;
+    }
 
     //read from arduino
     amp_value amp = UART_read_amp(fd);

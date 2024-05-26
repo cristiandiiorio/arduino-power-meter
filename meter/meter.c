@@ -45,7 +45,7 @@ int main(void){
     _delay_ms(1000);
     amp_value amp = {0, 0};
     amp.current = 0;
-    amp.timestamp = 0;
+    amp.timestamp = sm.payload;
 
     /*BINARY*/
     UART_print_amp_binary(&amp); 
