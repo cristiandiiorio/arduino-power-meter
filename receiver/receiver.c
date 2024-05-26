@@ -78,6 +78,7 @@ amp_value UART_read_amp(int fd) {
   amp_value amp = {0, 0};
 
   bytes_read = read(fd, &amp, sizeof(amp_value));
+  printf("bytes read: %d\n", bytes_read);
   if (bytes_read == sizeof(amp_value)) {
     total_bytes_read += bytes_read;
   } else {
