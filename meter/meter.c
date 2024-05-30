@@ -72,7 +72,7 @@ int main(void){
     
   }
   */
-  uint16_t online_mode_time = 1000;
+  uint16_t online_mode_time = 1;
   online_mode_time = 1000 * online_mode_time; // convert to ms
   while(amp_count < 1000){
     int key=(PINB&mask)==0;
@@ -80,16 +80,14 @@ int main(void){
     if (key == 1){
       amp_value amp = {0, 0};
       //now it's for real
-      amp.current = ;
+      amp.current = (float)rand() / RAND_MAX * 10.0;
       amp.timestamp = (online_mode_time / 1000) * amp_count;
       
       UART_send_amp_binary(&amp);
       amp_array[amp_count] = amp;
       amp_count++;
     }
-    for (uint16_t i = 0; i < online_mode_time; i++) {
-      _delay_ms(1);
-    }
-
+    _delay_ms(online_mode_time);
+  }
 
 }
