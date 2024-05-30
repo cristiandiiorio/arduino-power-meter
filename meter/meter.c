@@ -38,7 +38,7 @@ void adc_init(void) {
 }
 
 // Function to read the ADC value from a given channel (0-7)
-uint16_t adc_read(uint8_t ch) {
+float adc_read(uint8_t ch) {
   // Select ADC channel ch must be 0-7
   ch &= 0b00000111;  // ANDing with 7 to make sure channel is between 0-7
   ADMUX = (ADMUX & 0xF8) | ch;  // Clearing the last three bits before ORing
@@ -50,18 +50,9 @@ uint16_t adc_read(uint8_t ch) {
   while (ADCSRA & (1 << ADSC));
 
   // Combine the two 8-bit registers into a single 16-bit result
-  return (ADC);
+  return ADC - 477.0;
 }
 
-float my_trunc(float num){
-  int sign = (num < 0) ? -1 : 1; 
-  num = num * sign;              
-  num = num * 100;               
-  num = num + 0.5;               
-  int temp = (int)num;           
-  num = temp / 100.0;            
-  return sign * num;             
-}
 
 int main(void){
   //INITIALIZATION ZONE
@@ -113,31 +104,32 @@ int main(void){
   uint16_t online_mode_time = 1;
   online_mode_time = 10 * online_mode_time; // convert to ms
   
-  while(1){
-    float sum_of_squares = 0;
-    amp_count = 0;
-    while(amp_count < 1000){ 
-      float adc_voltage = adc_read(0);
-      float current = (adc_voltage-485.0) * (5.0-1024.0);
-      sum_of_squares += current * current;
+  float max_val;
+  float new_val;
+  float old_val = 0;
+  float rms;
 
-      amp_count++;
+  while (1) {
+    new_val = adc_read(0);
+    if (new_val > old_val) {
+      old_val = new_val;
+    } 
+    else {
       _delay_us(50);
+      new_val = adc_read(0);
+      if (new_val < old_val) {
+        max_val = old_val;
+        old_val = 0;
+      }
+      rms = max_val * 5.00 * 0.707 / 1024;
+      
+      amp_value amp = {0, 0};
+      amp.current = rms;
+      amp.timestamp = 0;
+
+      UART_send_amp_binary(&amp);
+      
+      _delay_ms(1000);
     }
-
-    float mean_square = sum_of_squares / amp_count;
-    float rms_current = sqrt(mean_square);
-    
-    amp_value amp = {0, 0};
-    amp.current = rms_current;
-    amp.timestamp = 0;
-
-    UART_send_amp_binary(&amp);
-    // amp_array[amp_count] = amp;
-    
-
-    _delay_ms(1000);
-
   }
-  
 }
