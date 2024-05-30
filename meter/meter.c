@@ -119,16 +119,16 @@ int main(void){
   online_mode_time = 10 * online_mode_time; // convert to ms
   
   float adc_voltage;
-  const float adc_baseline = 487.22;
-  const float sensitivity = 277.53;
 
   _delay_ms(1000);
 
   while(amp_count < 1000){  
     amp_value amp = {0, 0};
-    adc_voltage = adc_read(0);
-
-    amp.current = my_trunc((adc_voltage - adc_baseline) / sensitivity + 0.03);
+    //-----------------------------------//
+    //TODO: sbagliata conversione
+    adc_voltage = adc_read(0); 
+    amp.current = my_trunc(adc_voltage);
+    //-----------------------------------//
     amp.timestamp = (online_mode_time / 10) * amp_count;
     
     UART_send_amp_binary(&amp);
