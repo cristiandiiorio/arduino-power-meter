@@ -23,3 +23,6 @@ Con la vite in basso a destra, girando:
 - verso destra aumenta la resistenza
 - verso sinistra diminuisce
 (1 giro sono circa 2 ohm)
+
+## Breadboard
+Collegare i due GND in una strip e collegare quella strip a GND dell'arduino.
