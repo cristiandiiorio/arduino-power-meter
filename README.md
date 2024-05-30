@@ -18,3 +18,7 @@ Significa che usando la legge di Ohm:
 
 ``V=RI => 50 ohm * 1mA => 0.05V per A``
 
+## Potenziometro
+Con la vite in basso a destra, girando:
+- verso destra aumenta la resistenza
+- verso sinistra diminuisce
