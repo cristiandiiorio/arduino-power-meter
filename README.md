@@ -22,3 +22,4 @@ Significa che usando la legge di Ohm:
 Con la vite in basso a destra, girando:
 - verso destra aumenta la resistenza
 - verso sinistra diminuisce
+(1 giro sono circa 2 ohm)
