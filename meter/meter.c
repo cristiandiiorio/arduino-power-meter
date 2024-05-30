@@ -50,7 +50,7 @@ float adc_read(uint8_t ch) {
   while (ADCSRA & (1 << ADSC));
 
   // Combine the two 8-bit registers into a single 16-bit result
-  return ADC - 477.0;
+  return ADC; //466
 }
 
 
@@ -108,6 +108,7 @@ int main(void){
   float new_val;
   float old_val = 0;
   float rms;
+  float adjustment = 400;
 
   while (1) {
     new_val = adc_read(0);
@@ -124,7 +125,7 @@ int main(void){
       rms = max_val * 5.00 * 0.707 / 1024;
       
       amp_value amp = {0, 0};
-      amp.current = rms;
+      amp.current = (rms * adjustment);
       amp.timestamp = 0;
 
       UART_send_amp_binary(&amp);
