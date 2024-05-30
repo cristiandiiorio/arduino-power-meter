@@ -24,12 +24,55 @@ special_message UART_read_special_message() {
   return sm;
 }
 
+// Function to initialize the ADC
+void adc_init(void) {
+  // Select Vref=AVcc
+  ADMUX |= (1 << REFS0);
+  ADMUX &= ~(1 << REFS1);
+
+  // Set ADC prescaler to 128 for 16 MHz clock (125 kHz ADC clock)
+  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+
+  // Enable ADC
+  ADCSRA |= (1 << ADEN);
+}
+
+// Function to read the ADC value from a given channel (0-7)
+uint16_t adc_read(uint8_t ch) {
+  // Select ADC channel ch must be 0-7
+  ch &= 0b00000111;  // ANDing with 7 to make sure channel is between 0-7
+  ADMUX = (ADMUX & 0xF8) | ch;  // Clearing the last three bits before ORing
+
+  // Start single conversion
+  ADCSRA |= (1 << ADSC);
+
+  // Wait for conversion to complete
+  while (ADCSRA & (1 << ADSC));
+
+  // Combine the two 8-bit registers into a single 16-bit result
+  return (ADC);
+}
+
+float my_trunc(float num){
+  int sign = (num < 0) ? -1 : 1; 
+  num = num * sign;              
+  num = num * 100;               
+  num = num + 0.5;               
+  int temp = (int)num;           
+  num = temp / 100.0;            
+  return sign * num;             
+}
 
 int main(void){
   //INITIALIZATION ZONE
   UART_init();
+  adc_init();
   amp_value amp_array[ARRAY_SIZE];
   srand(time(0));
+
+  const float reference_voltage = 5.0;
+  const uint16_t max_adc_value = 1023;
+  const float sensor_sensitivity = 0.05;  // 50mV per Ampere (0.05V per A)
   
   //simulating the sensor
   const uint8_t mask=(1<<6);
@@ -73,21 +116,28 @@ int main(void){
   }
   */
   uint16_t online_mode_time = 1;
-  online_mode_time = 1000 * online_mode_time; // convert to ms
-  while(amp_count < 1000){
-    int key=(PINB&mask)==0;
+  online_mode_time = 10 * online_mode_time; // convert to ms
+  
+  float adc_voltage;
+  const float adc_baseline = 487.22;
+  const float sensitivity = 277.53;
+
+  _delay_ms(1000);
+
+  while(amp_count < 1000){  
+    amp_value amp = {0, 0};
+    adc_voltage = adc_read(0);
+
+    amp.current = my_trunc((adc_voltage - adc_baseline) / sensitivity + 0.03);
+    amp.timestamp = (online_mode_time / 10) * amp_count;
     
-    if (key == 1){
-      amp_value amp = {0, 0};
-      //now it's for real
-      amp.current = (float)rand() / RAND_MAX * 10.0;
-      amp.timestamp = (online_mode_time / 1000) * amp_count;
-      
-      UART_send_amp_binary(&amp);
-      amp_array[amp_count] = amp;
-      amp_count++;
-    }
+    UART_send_amp_binary(&amp);
+    amp_array[amp_count] = amp;
+    amp_count++;
+    
     _delay_ms(online_mode_time);
+
+    
   }
 
 }

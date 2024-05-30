@@ -69,7 +69,8 @@ int serial_open(const char* name) {
 }
 
 void print_amp(amp_value amp) {
-  printf("at time %ds current is %fA\n", amp.timestamp, amp.current);
+  //printf("at time %ds current is %.2fA\n", amp.timestamp, amp.current);
+  printf("%.2f\n",amp.current);
 }
 
 amp_value UART_read_amp(int fd) {
@@ -78,7 +79,7 @@ amp_value UART_read_amp(int fd) {
   amp_value amp = {0, 0};
 
   bytes_read = read(fd, &amp, sizeof(amp_value));
-  printf("bytes read: %d\n", bytes_read);
+  // printf("bytes read: %d\n", bytes_read);
   if (bytes_read == sizeof(amp_value)) {
     total_bytes_read += bytes_read;
   } else {
