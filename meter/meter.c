@@ -36,11 +36,12 @@ int main(void){
   DDRB &= ~mask;
   PORTB |= mask;
   uint16_t amp_count = 1;
-  
+
   //USER INPUT
-  special_message sm = UART_read_special_message();
+  // special_message sm = UART_read_special_message();
 
   //ONLINE MODE
+  /*
   if(sm.mode=='o'){
     uint16_t online_mode_time = sm.payload;
     online_mode_time = 1000 * online_mode_time; // convert to ms
@@ -70,5 +71,25 @@ int main(void){
     //CLEARING MODE
     
   }
+  */
+  uint16_t online_mode_time = 1000;
+  online_mode_time = 1000 * online_mode_time; // convert to ms
+  while(amp_count < 1000){
+    int key=(PINB&mask)==0;
+    
+    if (key == 1){
+      amp_value amp = {0, 0};
+      //now it's for real
+      amp.current = ;
+      amp.timestamp = (online_mode_time / 1000) * amp_count;
+      
+      UART_send_amp_binary(&amp);
+      amp_array[amp_count] = amp;
+      amp_count++;
+    }
+    for (uint16_t i = 0; i < online_mode_time; i++) {
+      _delay_ms(1);
+    }
+
 
 }
