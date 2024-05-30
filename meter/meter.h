@@ -5,6 +5,7 @@
 #include <avr/io.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #include "my_uart.h" // this includes the UART_putString and initializes it
 
 #define ARRAY_SIZE 1000

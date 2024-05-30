@@ -70,12 +70,7 @@ int main(void){
   amp_value amp_array[ARRAY_SIZE];
   srand(time(0));
 
-  const float reference_voltage = 5.0;
-  const uint16_t max_adc_value = 1023;
-  const float sensor_sensitivity = 0.05;  // 50mV per Ampere (0.05V per A)
-  
-  //simulating the sensor
-  const uint8_t mask=(1<<6);
+  const uint8_t mask = (1<<6);
   DDRB &= ~mask;
   PORTB |= mask;
   uint16_t amp_count = 1;
@@ -118,26 +113,31 @@ int main(void){
   uint16_t online_mode_time = 1;
   online_mode_time = 10 * online_mode_time; // convert to ms
   
-  float adc_voltage;
+  while(1){
+    float sum_of_squares = 0;
+    amp_count = 0;
+    while(amp_count < 1000){ 
+      float adc_voltage = adc_read(0);
+      float current = (adc_voltage-485.0) * (5.0-1024.0);
+      sum_of_squares += current * current;
 
-  _delay_ms(1000);
+      amp_count++;
+      _delay_us(50);
+    }
 
-  while(amp_count < 1000){  
+    float mean_square = sum_of_squares / amp_count;
+    float rms_current = sqrt(mean_square);
+    
     amp_value amp = {0, 0};
-    //-----------------------------------//
-    //TODO: sbagliata conversione
-    adc_voltage = adc_read(0); 
-    amp.current = my_trunc(adc_voltage);
-    //-----------------------------------//
-    amp.timestamp = (online_mode_time / 10) * amp_count;
-    
+    amp.current = rms_current;
+    amp.timestamp = 0;
+
     UART_send_amp_binary(&amp);
-    amp_array[amp_count] = amp;
-    amp_count++;
+    // amp_array[amp_count] = amp;
     
-    _delay_ms(online_mode_time);
 
-    
+    _delay_ms(1000);
+
   }
-
+  
 }
