@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "avr_common/common.h"
+#include "../avr_common/common.h"
 
 //! returns the descriptor of a serial port
 int serial_open(const char* name);

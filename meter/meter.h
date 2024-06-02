@@ -2,7 +2,7 @@
 #include <avr/interrupt.h>
 
 #include "my_uart.h" // this includes the UART_putString and initializes it
-#include "avr_common/common.h"
+#include "../avr_common/common.h"
 
 #define ARRAY_SIZE 1000
 
