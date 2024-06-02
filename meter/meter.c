@@ -53,14 +53,28 @@ float adc_read(uint8_t ch) {
   return ADC; //466
 }
 
+volatile uint8_t timer_flag = 0;
+void timer1_init(uint16_t ms) {
+  uint16_t timer_count = (F_CPU / 1000) * ms / 64;
+
+  // Set the timer count value
+  OCR1A = timer_count;
+
+  // Configure Timer1
+  TCCR1B |= (1 << WGM12); // CTC mode
+  TCCR1B |= (1 << CS11) | (1 << CS10); // Prescaler 64
+  TIMSK1 |= (1 << OCIE1A); // Enable Timer1 compare interrupt
+}
+
+ISR(TIMER1_COMPA_vect) {
+  timer_flag = 1; // Set the flag to indicate timer overflow
+}
 
 int main(void){
   //INITIALIZATION ZONE
   UART_init();
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
-  srand(time(0));
-
   uint16_t amp_count = 1;
 
   //USER INPUT
@@ -68,21 +82,20 @@ int main(void){
 
   //ONLINE MODE
   if(sm.mode=='o'){
-    uint16_t online_mode_time = sm.payload;
-    online_mode_time = 1000 * online_mode_time; // convert to ms
-    while(amp_count < 1000){
-      amp_value amp = {0, 0};
-      //simulating the sensor
-      amp.current = adc_read(0);
-      amp.timestamp = (online_mode_time / 1000) * amp_count;
-      
-      UART_send_amp_binary(&amp);
-      amp_array[amp_count] = amp;
-      amp_count++;
+    timer1_init(sm.payload * 1000);
+    enable_interrupts();
 
-      for (uint16_t i = 0; i < online_mode_time; i++) {
-        _delay_ms(1);
+    while(amp_count < 1000){
+      if(timer_flag){
+        amp_value amp = {0, 0}; 
+        amp.current = adc_read(0); //reading raw data from sensor
+        amp.timestamp = (sm.payload) * amp_count;
+        
+        UART_send_amp_binary(&amp);
+        amp_array[amp_count] = amp; //storing amp in array
+        amp_count++;
       }
+      
     }
   }
   //QUERY MODE
