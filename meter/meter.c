@@ -61,49 +61,41 @@ int main(void){
   amp_value amp_array[ARRAY_SIZE];
   srand(time(0));
 
-  const uint8_t mask = (1<<6);
-  DDRB &= ~mask;
-  PORTB |= mask;
   uint16_t amp_count = 1;
 
   //USER INPUT
-  // special_message sm = UART_read_special_message();
+  special_message sm = UART_read_special_message();
 
   //ONLINE MODE
-  /*
   if(sm.mode=='o'){
     uint16_t online_mode_time = sm.payload;
     online_mode_time = 1000 * online_mode_time; // convert to ms
     while(amp_count < 1000){
-      int key=(PINB&mask)==0;
+      amp_value amp = {0, 0};
+      //simulating the sensor
+      amp.current = adc_read(0);
+      amp.timestamp = (online_mode_time / 1000) * amp_count;
       
-      if (key == 1){
-        amp_value amp = {0, 0};
-        //simulating the sensor
-        amp.current = (float)rand() / RAND_MAX * 10.0;
-        amp.timestamp = (online_mode_time / 1000) * amp_count;
-        
-        UART_send_amp_binary(&amp);
-        amp_array[amp_count] = amp;
-        amp_count++;
-      }
+      UART_send_amp_binary(&amp);
+      amp_array[amp_count] = amp;
+      amp_count++;
+
       for (uint16_t i = 0; i < online_mode_time; i++) {
         _delay_ms(1);
       }
     }
   }
+  //QUERY MODE
   else if(sm.mode=='q'){
-    //QUERY MODE
+    
     
   }
+  //CLEARING MODE
   else if(sm.mode=='c'){
-    //CLEARING MODE
-    
+    memset(amp_array, 0, sizeof(amp_array));
   }
-  */
-  uint16_t online_mode_time = 1;
-  online_mode_time = 10 * online_mode_time; // convert to ms
   
+  /*
   float max_val;
   float new_val;
   float old_val = 0;
@@ -133,4 +125,5 @@ int main(void){
       _delay_ms(1000);
     }
   }
+  */
 }
