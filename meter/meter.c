@@ -1,5 +1,8 @@
 #include "meter.h"
 
+volatile uint8_t timer_flag = 0;
+volatile uint16_t amp_count = 0;
+
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
   int i = 0;
@@ -53,57 +56,53 @@ float adc_read(uint8_t ch) {
   return ADC; //466
 }
 
+ISR(TIMER5_COMPA_vect) {
+  timer_flag = 1; // Set the flag to indicate timer overflow
+  amp_count++;
+}
 
 int main(void){
   //INITIALIZATION ZONE
   UART_init();
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
-  srand(time(0));
-
-  const uint8_t mask = (1<<6);
-  DDRB &= ~mask;
-  PORTB |= mask;
-  uint16_t amp_count = 1;
 
   //USER INPUT
-  // special_message sm = UART_read_special_message();
+  special_message sm = UART_read_special_message();
 
   //ONLINE MODE
-  /*
   if(sm.mode=='o'){
-    uint16_t online_mode_time = sm.payload;
-    online_mode_time = 1000 * online_mode_time; // convert to ms
-    while(amp_count < 1000){
-      int key=(PINB&mask)==0;
-      
-      if (key == 1){
-        amp_value amp = {0, 0};
-        //simulating the sensor
-        amp.current = (float)rand() / RAND_MAX * 10.0;
-        amp.timestamp = (online_mode_time / 1000) * amp_count;
+    TCCR5A = 0;
+    TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
+    const int time = sm.payload;
+    uint16_t ocrval = (uint16_t)(15.625 * 1000* time);
+    OCR5A = ocrval;
+
+    cli();
+    TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+    sei();
+    while(1){
+      if(timer_flag){
+        timer_flag = 0;
+        amp_value amp = {0, 0}; 
+        amp.current = adc_read(0); //reading raw data from sensor
+        amp.timestamp = (sm.payload) * amp_count;
         
         UART_send_amp_binary(&amp);
-        amp_array[amp_count] = amp;
-        amp_count++;
-      }
-      for (uint16_t i = 0; i < online_mode_time; i++) {
-        _delay_ms(1);
+        amp_array[amp_count] = amp; //storing amp in array
       }
     }
   }
+  //QUERY MODE
   else if(sm.mode=='q'){
-    //QUERY MODE
     
   }
+  //CLEARING MODE
   else if(sm.mode=='c'){
-    //CLEARING MODE
-    
+    memset(amp_array, 0, sizeof(amp_array));
   }
-  */
-  uint16_t online_mode_time = 1;
-  online_mode_time = 10 * online_mode_time; // convert to ms
   
+  /*
   float max_val;
   float new_val;
   float old_val = 0;
@@ -133,4 +132,5 @@ int main(void){
       _delay_ms(1000);
     }
   }
+  */
 }

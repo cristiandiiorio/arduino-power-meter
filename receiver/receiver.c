@@ -1,5 +1,7 @@
 #include "receiver.h"
 
+#define blocking_status 1
+
 int serial_set_interface_attribs(int fd, int speed, int parity) {
   struct termios tty;
   memset (&tty, 0, sizeof tty);
@@ -69,8 +71,8 @@ int serial_open(const char* name) {
 }
 
 void print_amp(amp_value amp) {
-  //printf("at time %ds current is %.2fA\n", amp.timestamp, amp.current);
-  printf("%fmA\n",amp.current);
+  printf("at time %ds current is %.2fA\n", amp.timestamp, amp.current);
+  // printf("%fmA\n",amp.current);
 }
 
 amp_value UART_read_amp(int fd) {
@@ -84,6 +86,7 @@ amp_value UART_read_amp(int fd) {
     total_bytes_read += bytes_read;
   } else {
     perror("read");
+    printf("Expected to read %lu bytes, but got %d bytes\n", sizeof(amp_value), bytes_read);
   }
 
   return amp;
@@ -98,6 +101,11 @@ void UART_send_special_message(int fd, special_message *msg) {
   }
 }
 
+void clear_input_buffer() {
+  int c;
+  while ((c = getchar()) != '\n' && c != EOF);
+}
+
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
@@ -108,24 +116,41 @@ int main(int argc, const char** argv) {
   }
   const char* serial_device=argv[1];
   int baudrate=atoi(argv[2]);
-
-  /*
+  
   char mode;
-  printf("o for online mode, q for query mode, c for clearing mode: ");
-  scanf("%c", &mode);
-  */
-
+  int input_check = 0;
+  while(input_check == 0){
+    printf("o for online mode, q for query mode, c for clearing mode: ");
+    mode = getchar();
+    clear_input_buffer();
+    if(mode=='o' || mode=='q' || mode=='c'){
+      input_check = 1;
+    }
+    else {
+      printf("That mode does not exist\n");
+    }
+  }  
+    
+  //serial setup
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
-  serial_set_blocking(fd, 1);
-
-  /*
+  serial_set_blocking(fd, blocking_status);
+  
   // online mode 
   if (mode == 'o') {
     // user input
+    char input[10];
     int sampling_interval;
     printf("desired sampling interval: ");
-    scanf("%d", &sampling_interval);
+    if (fgets(input, sizeof(input), stdin) != NULL) {
+      sampling_interval = atoi(input);
+      if (sampling_interval < 0) {
+        printf("Wrong sampling interval\n");
+      }
+    } 
+    else {
+      printf("Error reading input\n");
+    }
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
     UART_send_special_message(fd, &sm);
@@ -136,20 +161,26 @@ int main(int argc, const char** argv) {
       print_amp(amp);
     }
   } 
+
   // query mode
   else if (mode == 'q') { 
 
   }
+
   // clearing mode
   else if (mode == 'c') {
+    char confirmation;
+    printf("Are you sure you want to clear the array? (y/n): ");
+    confirmation = getchar();
     
-  }
-  */
-
-  while(1){
-    //read from arduino
-    amp_value amp = UART_read_amp(fd);
-    print_amp(amp);
+    if (confirmation == 'y') {
+      special_message sm = {0, mode};
+      UART_send_special_message(fd, &sm);
+    }
+    else {
+      printf("Wrong confirmation\n");
+    }
+    clear_input_buffer();
   }
 
   return 0;

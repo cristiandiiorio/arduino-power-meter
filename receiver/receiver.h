@@ -4,26 +4,8 @@
 #include <termios.h>
 #include <unistd.h>
 #include <errno.h>
-#include <termios.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdint.h>
 
-typedef struct __attribute__((packed)) amp_value {
-  float current; 
-  uint16_t timestamp;
-} amp_value;
-
-
-typedef struct __attribute__((packed)) special_message {
-  uint16_t payload; 
-  char mode;
-} special_message;
+#include "../avr_common/common.h"
 
 //! returns the descriptor of a serial port
 int serial_open(const char* name);
