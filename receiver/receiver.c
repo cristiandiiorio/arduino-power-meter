@@ -87,7 +87,6 @@ amp_value UART_read_amp(int fd) {
   } else {
     perror("read");
     printf("Expected to read %lu bytes, but got %d bytes\n", sizeof(amp_value), bytes_read);
-
   }
 
   return amp;
@@ -123,13 +122,13 @@ int main(int argc, const char** argv) {
   while(input_check == 0){
     printf("o for online mode, q for query mode, c for clearing mode: ");
     mode = getchar();
+    clear_input_buffer();
     if(mode=='o' || mode=='q' || mode=='c'){
       input_check = 1;
     }
     else {
       printf("That mode does not exist\n");
     }
-    clear_input_buffer();
   }  
     
   //serial setup
@@ -158,7 +157,6 @@ int main(int argc, const char** argv) {
 
     while(1){
       //read from arduino
-      printf("Reading from arduino\n");
       amp_value amp = UART_read_amp(fd);
       print_amp(amp);
     }
