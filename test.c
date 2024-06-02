@@ -12,7 +12,10 @@ typedef struct __attribute__((packed)) special_message {
 } special_message;
 
 int main() {
-  printf("Size of amp_value: %ld bytes\n", sizeof(amp_value));
-  printf("Size of special_message: %ld bytes\n", sizeof(special_message));
+  //printf("Size of amp_value: %ld bytes\n", sizeof(amp_value));
+  //printf("Size of special_message: %ld bytes\n", sizeof(special_message));
+  
+  char mode[2];
+  printf("%ld", sizeof(mode));
   return 0;
 }

@@ -98,6 +98,11 @@ void UART_send_special_message(int fd, special_message *msg) {
   }
 }
 
+void clear_input_buffer() {
+  int c;
+  while ((c = getchar()) != '\n' && c != EOF);
+}
+
 /*
   serial_linux <serial_file> <baudrate> <read=1, write=0>
 */
@@ -110,16 +115,19 @@ int main(int argc, const char** argv) {
   int baudrate=atoi(argv[2]);
   
   char mode;
-  printf("o for online mode, q for query mode, c for clearing mode: ");
-  if (fgets(mode, sizeof(mode), stdin) != NULL) {
-    if (mode[0] != 'o' && 'q' && 'c') {
+  int input_check = 0;
+  while(input_check == 0){
+    printf("o for online mode, q for query mode, c for clearing mode: ");
+    mode = getchar();
+    if(mode=='o' || mode=='q' || mode=='c'){
+      input_check = 1;
+    }
+    else {
       printf("That mode does not exist\n");
     }
-  } 
-  else {
-    printf("Error reading input\n");
-  }
-  
+    clear_input_buffer();
+  }  
+    
   //serial setup
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
@@ -128,9 +136,11 @@ int main(int argc, const char** argv) {
   // online mode 
   if (mode == 'o') {
     // user input
+    char input[10];
     int sampling_interval;
     printf("desired sampling interval: ");
-    if (fgets(sampling_interval, sizeof(sampling_interval), stdin) != NULL) {
+    if (fgets(input, sizeof(input), stdin) != NULL) {
+      sampling_interval = atoi(input);
       if (sampling_interval < 0) {
         printf("Wrong sampling interval\n");
       }
@@ -156,20 +166,18 @@ int main(int argc, const char** argv) {
 
   // clearing mode
   else if (mode == 'c') {
-    char confirmation[1];
+    char confirmation;
     printf("Are you sure you want to clear the array? (y/n): ");
-    if (fgets(mode, sizeof(mode), stdin) != NULL) {
-      if (mode[0] != 'y' && 'n') {
-        printf("Wrong input\n");
-      }
-    } 
-    else {
-      printf("Error reading input\n");
-    }
-    if (confirmation[0] == 'y') {
+    confirmation = getchar();
+    
+    if (confirmation == 'y') {
       special_message sm = {0, mode};
       UART_send_special_message(fd, &sm);
     }
+    else {
+      printf("Wrong confirmation\n");
+    }
+    clear_input_buffer();
   }
 
   return 0;
