@@ -69,8 +69,8 @@ int serial_open(const char* name) {
 }
 
 void print_amp(amp_value amp) {
-  //printf("at time %ds current is %.2fA\n", amp.timestamp, amp.current);
-  printf("%fmA\n",amp.current);
+  printf("at time %ds current is %.2fA\n", amp.timestamp, amp.current);
+  // printf("%fmA\n",amp.current);
 }
 
 amp_value UART_read_amp(int fd) {
@@ -108,18 +108,16 @@ int main(int argc, const char** argv) {
   }
   const char* serial_device=argv[1];
   int baudrate=atoi(argv[2]);
-
-  /*
+  
   char mode;
   printf("o for online mode, q for query mode, c for clearing mode: ");
   scanf("%c", &mode);
-  */
-
+  
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
   serial_set_blocking(fd, 1);
 
-  /*
+  
   // online mode 
   if (mode == 'o') {
     // user input
@@ -143,13 +141,6 @@ int main(int argc, const char** argv) {
   // clearing mode
   else if (mode == 'c') {
     
-  }
-  */
-
-  while(1){
-    //read from arduino
-    amp_value amp = UART_read_amp(fd);
-    print_amp(amp);
   }
 
   return 0;

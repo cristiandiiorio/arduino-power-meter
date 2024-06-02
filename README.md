@@ -1,6 +1,6 @@
 ## Per leggere da terminale:
 ```
-./receiver /dev/ttyUSB0 19200 1
+./receiver /dev/ttyUSB0 19200
 ```
 
 ## Collegamento sensore-arduino:
