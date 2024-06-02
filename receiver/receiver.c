@@ -111,19 +111,33 @@ int main(int argc, const char** argv) {
   
   char mode;
   printf("o for online mode, q for query mode, c for clearing mode: ");
-  scanf("%c", &mode);
+  if (fgets(mode, sizeof(mode), stdin) != NULL) {
+    if (mode[0] != 'o' && 'q' && 'c') {
+      printf("That mode does not exist\n");
+    }
+  } 
+  else {
+    printf("Error reading input\n");
+  }
   
+  //serial setup
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
   serial_set_blocking(fd, 1);
-
   
   // online mode 
   if (mode == 'o') {
     // user input
     int sampling_interval;
     printf("desired sampling interval: ");
-    scanf("%d", &sampling_interval);
+    if (fgets(sampling_interval, sizeof(sampling_interval), stdin) != NULL) {
+      if (sampling_interval < 0) {
+        printf("Wrong sampling interval\n");
+      }
+    } 
+    else {
+      printf("Error reading input\n");
+    }
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
     UART_send_special_message(fd, &sm);
@@ -134,13 +148,28 @@ int main(int argc, const char** argv) {
       print_amp(amp);
     }
   } 
+
   // query mode
   else if (mode == 'q') { 
 
   }
+
   // clearing mode
   else if (mode == 'c') {
-    
+    char confirmation[1];
+    printf("Are you sure you want to clear the array? (y/n): ");
+    if (fgets(mode, sizeof(mode), stdin) != NULL) {
+      if (mode[0] != 'y' && 'n') {
+        printf("Wrong input\n");
+      }
+    } 
+    else {
+      printf("Error reading input\n");
+    }
+    if (confirmation[0] == 'y') {
+      special_message sm = {0, mode};
+      UART_send_special_message(fd, &sm);
+    }
   }
 
   return 0;
