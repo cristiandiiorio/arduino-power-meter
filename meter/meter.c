@@ -1,5 +1,8 @@
 #include "meter.h"
 
+volatile uint8_t timer_flag = 0;
+volatile uint16_t amp_count = 0;
+
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
   int i = 0;
@@ -53,21 +56,9 @@ float adc_read(uint8_t ch) {
   return ADC; //466
 }
 
-volatile uint8_t timer_flag = 0;
-void timer1_init(uint16_t ms) {
-  uint16_t timer_count = (F_CPU / 1000) * ms / 64;
-
-  // Set the timer count value
-  OCR1A = timer_count;
-
-  // Configure Timer1
-  TCCR1B |= (1 << WGM12); // CTC mode
-  TCCR1B |= (1 << CS11) | (1 << CS10); // Prescaler 64
-  TIMSK1 |= (1 << OCIE1A); // Enable Timer1 compare interrupt
-}
-
-ISR(TIMER1_COMPA_vect) {
+ISR(TIMER5_COMPA_vect) {
   timer_flag = 1; // Set the flag to indicate timer overflow
+  amp_count++;
 }
 
 int main(void){
@@ -75,32 +66,35 @@ int main(void){
   UART_init();
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
-  uint16_t amp_count = 1;
 
   //USER INPUT
   special_message sm = UART_read_special_message();
 
   //ONLINE MODE
   if(sm.mode=='o'){
-    timer1_init(sm.payload * 1000);
-    enable_interrupts();
+    TCCR5A = 0;
+    TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
 
-    while(amp_count < 1000){
+    uint16_t ocrval = (uint16_t)(15.625 * 1000);
+    OCR5A = ocrval;
+
+    cli();
+    TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+    sei();
+    while(1){
       if(timer_flag){
+        timer_flag = 0;
         amp_value amp = {0, 0}; 
         amp.current = adc_read(0); //reading raw data from sensor
         amp.timestamp = (sm.payload) * amp_count;
         
         UART_send_amp_binary(&amp);
         amp_array[amp_count] = amp; //storing amp in array
-        amp_count++;
       }
-      
     }
   }
   //QUERY MODE
   else if(sm.mode=='q'){
-    
     
   }
   //CLEARING MODE

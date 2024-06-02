@@ -1,5 +1,7 @@
 #include "receiver.h"
 
+#define blocking_status 1
+
 int serial_set_interface_attribs(int fd, int speed, int parity) {
   struct termios tty;
   memset (&tty, 0, sizeof tty);
@@ -84,6 +86,8 @@ amp_value UART_read_amp(int fd) {
     total_bytes_read += bytes_read;
   } else {
     perror("read");
+    printf("Expected to read %lu bytes, but got %d bytes\n", sizeof(amp_value), bytes_read);
+
   }
 
   return amp;
@@ -131,7 +135,7 @@ int main(int argc, const char** argv) {
   //serial setup
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
-  serial_set_blocking(fd, 1);
+  serial_set_blocking(fd, blocking_status);
   
   // online mode 
   if (mode == 'o') {
@@ -154,6 +158,7 @@ int main(int argc, const char** argv) {
 
     while(1){
       //read from arduino
+      printf("Reading from arduino\n");
       amp_value amp = UART_read_amp(fd);
       print_amp(amp);
     }
