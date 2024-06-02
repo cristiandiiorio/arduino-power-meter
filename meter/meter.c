@@ -13,6 +13,10 @@ void UART_send_amp_binary(amp_value *amp) {
 
 }
 
+int UART_isDataAvailable() {
+  return (UCSR0A & (1 << RXC0));
+}
+
 special_message UART_read_special_message() {
   special_message sm;
   uint8_t* sm_ptr = (uint8_t*) &sm;
@@ -67,7 +71,20 @@ int main(void){
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
 
-  //USER INPUT
+  //----------------------------------------------------//
+  //DETACHED MODE (NO RECEIVER CONNECTED)
+  // while(!UART_isDataAvailable()){
+  //   amp_value amp_test = {1,1};
+  //   amp_array[10] = amp_test;
+  //   amp_array[1] = amp_test;
+  //   amp_array[100] = amp_test;
+  // }  
+
+
+
+
+  //----------------------------------------------------//
+  //USER MODE (RECEIVER CONNECTED)
   special_message sm = UART_read_special_message();
 
   //ONLINE MODE
@@ -95,7 +112,7 @@ int main(void){
   }
   //QUERY MODE
   else if(sm.mode=='q'){
-    
+    UART_send_amp_binary(&amp_array[1]);
   }
   //CLEARING MODE
   else if(sm.mode=='c'){

@@ -162,9 +162,14 @@ int main(int argc, const char** argv) {
     }
   } 
 
-  // query mode
+  // query mode TODO
   else if (mode == 'q') { 
-
+    special_message sm = {0, mode};
+    UART_send_special_message(fd, &sm);
+    amp_value amp;
+    amp = UART_read_amp(fd);
+    print_amp(amp);
+    
   }
 
   // clearing mode
