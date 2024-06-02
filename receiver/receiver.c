@@ -153,7 +153,7 @@ int main(int argc, const char** argv) {
     }
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
-    UART_send_special_message(fd, &sm);
+    //UART_send_special_message(fd, &sm);
 
     while(1){
       //read from arduino

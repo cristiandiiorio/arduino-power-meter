@@ -85,14 +85,16 @@ int main(void){
 
   //----------------------------------------------------//
   //USER MODE (RECEIVER CONNECTED)
-  special_message sm = UART_read_special_message();
-
+  //special_message sm = UART_read_special_message();
+  special_message sm;
+  sm.mode = 'o';
+  sm.payload = 1;
   //ONLINE MODE
   if(sm.mode=='o'){
     TCCR5A = 0;
     TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
     const int time = sm.payload;
-    uint16_t ocrval = (uint16_t)(15.625 * 1000* time);
+    uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
     OCR5A = ocrval;
 
     cli();
