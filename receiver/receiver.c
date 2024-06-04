@@ -71,7 +71,7 @@ int serial_open(const char* name) {
 }
 
 void print_amp(amp_value amp) {
-  printf("at time %ds current is %.2fA\n", amp.timestamp, amp.current);
+  printf("at time %ds current is %fA\n", amp.timestamp, amp.current);
   // printf("%fmA\n",amp.current);
 }
 
