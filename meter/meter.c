@@ -16,24 +16,6 @@ void UART_send_amp_binary(amp_value *amp) {
 
 }
 
-int UART_isDataAvailable() {
-  return (UCSR0A & (1 << RXC0));
-}
-
-special_message UART_read_special_message() {
-  special_message sm;
-  uint8_t* sm_ptr = (uint8_t*) &sm;
-  int i = 0;
-
-  while(i < sizeof(special_message)){
-    uint8_t c = UART_getChar();
-    *sm_ptr = c;
-    ++sm_ptr;
-    ++i;
-  }
-  return sm;
-}
-
 // Function to initialize the ADC
 void adc_init(void) {
   // Select Vref=AVcc
@@ -98,7 +80,7 @@ int main(void){
     TCCR5A = 0;
     TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
     const int time = sm.payload;
-    uint16_t ocrval = (uint16_t)(15.625 * time);
+    uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
     OCR5A = ocrval;
 
     cli();
@@ -111,19 +93,26 @@ int main(void){
     while(1){
       if(timer_flag){
         timer_flag = 0;
-        adc_buffer[buffer_index++] = ((adc_read(0) -1 )/ 1023.0) * 5.0; // Reading raw data from sensor
+        //adc_buffer[buffer_index++] = ((adc_read(0))/ 1023.0) * 5.0; // Reading raw data from sensor
 
+        amp_value amp = {0, 0};
+        amp.current = adc_read(0) ; // Calculate RMS value
+        amp.timestamp = sm.payload++;
+
+        UART_send_amp_binary(&amp);
+          
+        /*
         if (buffer_index >= BUFFER_SIZE) {
-          buffer_index = 0;
-
           amp_value amp = {0, 0};
           float rms = calculate_rms(adc_buffer, BUFFER_SIZE);
           amp.current = rms ; // Calculate RMS value
           amp.timestamp = sm.payload++;
 
           UART_send_amp_binary(&amp);
+          buffer_index = 0;
           // amp_array[amp_count % ARRAY_SIZE] = amp; // Storing amp in array
         }
+        */
       }
     }
   }
