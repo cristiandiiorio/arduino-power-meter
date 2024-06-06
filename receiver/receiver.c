@@ -71,7 +71,7 @@ int serial_open(const char* name) {
 }
 
 void print_amp(amp_value amp) {
-  printf("at time %ds current is %.2fA\n", amp.timestamp, amp.current);
+  printf("at time %ds current is %fA\n", amp.timestamp, amp.current);
   // printf("%fmA\n",amp.current);
 }
 
@@ -153,7 +153,7 @@ int main(int argc, const char** argv) {
     }
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
-    UART_send_special_message(fd, &sm);
+    //UART_send_special_message(fd, &sm);
 
     while(1){
       //read from arduino

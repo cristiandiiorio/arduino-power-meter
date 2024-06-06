@@ -14,5 +14,5 @@ typedef struct __attribute__((packed)) special_message {
   char mode;
 } special_message;
 
-#define enable_interrupts() sei()
-#define disable_interrupts() cli()
+#define interrupts() sei()
+#define no_interrupts() cli()

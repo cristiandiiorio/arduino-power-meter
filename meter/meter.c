@@ -1,4 +1,7 @@
 #include "meter.h"
+#include <math.h>
+
+#define BUFFER_SIZE 1000
 
 volatile uint8_t timer_flag = 0;
 volatile uint16_t amp_count = 0;
@@ -11,24 +14,6 @@ void UART_send_amp_binary(amp_value *amp) {
     i++;
   }
 
-}
-
-int UART_isDataAvailable() {
-  return (UCSR0A & (1 << RXC0));
-}
-
-special_message UART_read_special_message() {
-  special_message sm;
-  uint8_t* sm_ptr = (uint8_t*) &sm;
-  int i = 0;
-
-  while(i < sizeof(special_message)){
-    uint8_t c = UART_getChar();
-    *sm_ptr = c;
-    ++sm_ptr;
-    ++i;
-  }
-  return sm;
 }
 
 // Function to initialize the ADC
@@ -62,7 +47,16 @@ float adc_read(uint8_t ch) {
 
 ISR(TIMER5_COMPA_vect) {
   timer_flag = 1; // Set the flag to indicate timer overflow
-  amp_count++;
+}
+
+float calculate_rms(float *buffer, uint16_t size) {
+  float sum_of_squares = 0;
+  for (uint16_t i = 0; i < size; i++) {
+    sum_of_squares += buffer[i] * buffer[i];
+  }
+  float mean_of_squares = sum_of_squares / size;
+  float rms = sqrt(mean_of_squares);
+  return rms;
 }
 
 int main(void){
@@ -73,40 +67,52 @@ int main(void){
 
   //----------------------------------------------------//
   //DETACHED MODE (NO RECEIVER CONNECTED)
-  // while(!UART_isDataAvailable()){
-  //   amp_value amp_test = {1,1};
-  //   amp_array[10] = amp_test;
-  //   amp_array[1] = amp_test;
-  //   amp_array[100] = amp_test;
-  // }  
-
-
 
 
   //----------------------------------------------------//
   //USER MODE (RECEIVER CONNECTED)
-  special_message sm = UART_read_special_message();
-
+  //special_message sm = UART_read_special_message();
+  special_message sm;
+  sm.mode = 'o';
+  sm.payload = 1;
   //ONLINE MODE
   if(sm.mode=='o'){
     TCCR5A = 0;
     TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
     const int time = sm.payload;
-    uint16_t ocrval = (uint16_t)(15.625 * 1000* time);
+    uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
     OCR5A = ocrval;
 
     cli();
     TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
     sei();
+
+    float adc_buffer[BUFFER_SIZE];
+    uint16_t buffer_index = 0;
+
     while(1){
       if(timer_flag){
         timer_flag = 0;
-        amp_value amp = {0, 0}; 
-        amp.current = adc_read(0); //reading raw data from sensor
-        amp.timestamp = (sm.payload) * amp_count;
-        
+        //adc_buffer[buffer_index++] = ((adc_read(0))/ 1023.0) * 5.0; // Reading raw data from sensor
+
+        amp_value amp = {0, 0};
+        amp.current = adc_read(0) ; // Calculate RMS value
+        amp.timestamp = sm.payload++;
+
         UART_send_amp_binary(&amp);
-        amp_array[amp_count] = amp; //storing amp in array
+          
+        /*
+        if (buffer_index >= BUFFER_SIZE) {
+          amp_value amp = {0, 0};
+          float rms = calculate_rms(adc_buffer, BUFFER_SIZE);
+          amp.current = rms ; // Calculate RMS value
+          amp.timestamp = sm.payload++;
+
+          UART_send_amp_binary(&amp);
+          buffer_index = 0;
+          // amp_array[amp_count % ARRAY_SIZE] = amp; // Storing amp in array
+        }
+        */
       }
     }
   }
@@ -119,35 +125,4 @@ int main(void){
     memset(amp_array, 0, sizeof(amp_array));
   }
   
-  /*
-  float max_val;
-  float new_val;
-  float old_val = 0;
-  float rms;
-  float adjustment = 400;
-
-  while (1) {
-    new_val = adc_read(0);
-    if (new_val > old_val) {
-      old_val = new_val;
-    } 
-    else {
-      _delay_us(50);
-      new_val = adc_read(0);
-      if (new_val < old_val) {
-        max_val = old_val;
-        old_val = 0;
-      }
-      rms = max_val * 5.00 * 0.707 / 1024;
-      
-      amp_value amp = {0, 0};
-      amp.current = (rms * adjustment);
-      amp.timestamp = 0;
-
-      UART_send_amp_binary(&amp);
-      
-      _delay_ms(1000);
-    }
-  }
-  */
 }
