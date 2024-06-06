@@ -101,36 +101,43 @@ void UART_send_special_message(int fd, special_message *msg) {
   }
 }
 
-void clear_input_buffer() {
-  int c;
-  while ((c = getchar()) != '\n' && c != EOF);
-}
-
 /*
-  serial_linux <serial_file> <baudrate> <read=1, write=0>
+  receiver /dev/ttyUSB0 19200
 */
 
 int main(int argc, const char** argv) {
   if (argc < 3) {
-    printf("serial_linux <serial_file> <baudrate>\n");
+    printf("receiver <serial_file> <baudrate>\n");
   }
   const char* serial_device=argv[1];
   int baudrate=atoi(argv[2]);
   
+  char input[3];
   char mode;
-  int input_check = 0;
-  while(input_check == 0){
-    printf("o for online mode, q for query mode, c for clearing mode: ");
-    mode = getchar();
-    clear_input_buffer();
-    if(mode=='o' || mode=='q' || mode=='c'){
-      input_check = 1;
+  printf("o for online mode, q for query mode, c for clearing mode: ");
+
+  if(fgets(input, sizeof(input), stdin)){
+    if(input[1] == '\n' || input[1] == '\0'){
+      if ((input[0] >= 'a' && input[0] <= 'z') || (input[0] >= 'A' && input[0] <= 'Z') || (input[0] >= '0' && input[0] <= '9')) {
+        if(input[0]=='o' || input[0]=='q' || input[0]=='c'){
+          mode = input[0];
+        }
+        else {
+          printf("Invalid mode entered!\n");
+        }
+      }
+      else {
+        printf("Invalid character entered!\n");
+      }
     }
-    else {
-      printf("That mode does not exist\n");
+    else{
+      printf("You have entered more than one character!\n");
     }
-  }  
-    
+  }
+  else {
+    printf("Error reading from input!\n");
+  }
+
   //serial setup
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
@@ -153,7 +160,7 @@ int main(int argc, const char** argv) {
     }
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
-    //UART_send_special_message(fd, &sm);
+    UART_send_special_message(fd, &sm);
 
     while(1){
       //read from arduino

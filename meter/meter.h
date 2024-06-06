@@ -10,6 +10,13 @@
 
 void UART_send_amp_binary(amp_value *amp);
 
-special_message UART_read_special_message();
+special_message UART_read_special_message(void);
+
+void adc_init(void);
+
+float adc_read(void);
+
+float calculate_rms(float *buffer, uint16_t size);
+
 
 

@@ -4,7 +4,7 @@
 #define BUFFER_SIZE 1000
 
 volatile uint8_t timer_flag = 0;
-volatile uint16_t amp_count = 0;
+volatile uint16_t measurement_count = 0;
 
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
@@ -14,6 +14,20 @@ void UART_send_amp_binary(amp_value *amp) {
     i++;
   }
 
+}
+
+special_message UART_read_special_message(void) {
+  special_message sm;
+  uint8_t* sm_ptr = (uint8_t*) &sm;
+  int i = 0;
+
+  while(i < sizeof(special_message)){
+    uint8_t c = UART_getChar();
+    *sm_ptr = c;
+    ++sm_ptr;
+    ++i;
+  }
+  return sm;
 }
 
 // Function to initialize the ADC
@@ -29,11 +43,9 @@ void adc_init(void) {
   ADCSRA |= (1 << ADEN);
 }
 
-// Function to read the ADC value from a given channel (0-7)
-float adc_read(uint8_t ch) {
-  // Select ADC channel ch must be 0-7
-  ch &= 0b00000111;  // ANDing with 7 to make sure channel is between 0-7
-  ADMUX = (ADMUX & 0xF8) | ch;  // Clearing the last three bits before ORing
+// Function to read ADC channel 0
+float adc_read(void) {
+  ADMUX = (ADMUX & 0xF8) | 0;  
 
   // Start single conversion
   ADCSRA |= (1 << ADSC);
@@ -42,12 +54,9 @@ float adc_read(uint8_t ch) {
   while (ADCSRA & (1 << ADSC));
 
   // Combine the two 8-bit registers into a single 16-bit result
-  return ADC; //466
+  return ADC; 
 }
 
-ISR(TIMER5_COMPA_vect) {
-  timer_flag = 1; // Set the flag to indicate timer overflow
-}
 
 float calculate_rms(float *buffer, uint16_t size) {
   float sum_of_squares = 0;
@@ -58,6 +67,12 @@ float calculate_rms(float *buffer, uint16_t size) {
   float rms = sqrt(mean_of_squares);
   return rms;
 }
+
+ISR(TIMER5_COMPA_vect) {
+  timer_flag = 1; // Set the flag to indicate timer overflow
+  measurement_count++;
+}
+
 
 int main(void){
   //INITIALIZATION ZONE
@@ -71,10 +86,8 @@ int main(void){
 
   //----------------------------------------------------//
   //USER MODE (RECEIVER CONNECTED)
-  //special_message sm = UART_read_special_message();
-  special_message sm;
-  sm.mode = 'o';
-  sm.payload = 1;
+  special_message sm = UART_read_special_message();
+
   //ONLINE MODE
   if(sm.mode=='o'){
     TCCR5A = 0;
@@ -83,42 +96,28 @@ int main(void){
     uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
     OCR5A = ocrval;
 
-    cli();
+    disable_interrupts();
     TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
-    sei();
-
-    float adc_buffer[BUFFER_SIZE];
-    uint16_t buffer_index = 0;
+    enable_interrupts();
 
     while(1){
       if(timer_flag){
         timer_flag = 0;
-        //adc_buffer[buffer_index++] = ((adc_read(0))/ 1023.0) * 5.0; // Reading raw data from sensor
-
+      
         amp_value amp = {0, 0};
-        amp.current = adc_read(0) ; // Calculate RMS value
-        amp.timestamp = sm.payload++;
+        amp.current = adc_read() ; // Calculate RMS value
+        amp.timestamp = measurement_count;
 
         UART_send_amp_binary(&amp);
-          
-        /*
-        if (buffer_index >= BUFFER_SIZE) {
-          amp_value amp = {0, 0};
-          float rms = calculate_rms(adc_buffer, BUFFER_SIZE);
-          amp.current = rms ; // Calculate RMS value
-          amp.timestamp = sm.payload++;
-
-          UART_send_amp_binary(&amp);
-          buffer_index = 0;
-          // amp_array[amp_count % ARRAY_SIZE] = amp; // Storing amp in array
-        }
-        */
+        
+        amp_array[measurement_count] = amp; // Storing amp in array
       }
     }
   }
   //QUERY MODE
   else if(sm.mode=='q'){
-    UART_send_amp_binary(&amp_array[1]);
+    amp_value amp = {0, 0};
+    UART_send_amp_binary(&amp);
   }
   //CLEARING MODE
   else if(sm.mode=='c'){
