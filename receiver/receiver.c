@@ -101,6 +101,89 @@ void UART_send_special_message(int fd, special_message *msg) {
   }
 }
 
+char input_mode(void){
+  char input[3];
+  printf("Type o for online mode, q for query mode, c for clearing mode: ");
+
+  if(fgets(input, sizeof(input), stdin)){
+    if(input[1] == '\n' || input[1] == '\0'){ //correct length
+      if ((input[0] >= 'a' && input[0] <= 'z') || (input[0] >= 'A' && input[0] <= 'Z') || (input[0] >= '0' && input[0] <= '9')) { //correct character
+        if(input[0]=='o' || input[0]=='q' || input[0]=='c'){ //existing mode
+          return input[0];
+        }
+        else {
+          printf("Invalid mode entered!\n");
+          return -1;
+        }
+      }
+      else {
+        printf("Invalid character entered!\n");
+        return -1;
+      }
+    }
+    else{
+      printf("You have entered more than one character!\n");
+      return -1;
+    }
+  }
+  else{
+    printf("Error reading input\n");
+    return -1;
+  }
+}
+
+int input_sampling(void){
+  char input[4]; //Maximum of 60 seconds ==> 2 chars
+  int sampling_interval;
+  printf("Desired sampling interval: ");
+  if (fgets(input, sizeof(input), stdin)) {
+    if(input[2] == '\n' || input[2] == '\0'){ //correct length
+      sampling_interval = atoi(input);
+      if (sampling_interval < 0 || sampling_interval > 60) { //correct interval
+        printf("Wrong sampling interval\n");
+      }
+      return sampling_interval;
+    }
+    else {
+      printf("You have entered more than two characters!\n");
+    }
+  } 
+  else {
+    printf("Error reading input\n");
+  }
+}
+
+char input_confirmation(void){
+  char input[3];
+  printf("Are you sure you want to clear the array? (Y/n): ");
+
+  if(fgets(input, sizeof(input), stdin)){
+    if(input[1] == '\n' || input[1] == '\0'){ //correct length
+      if ((input[0] >= 'a' && input[0] <= 'z') || (input[0] >= 'A' && input[0] <= 'Z') || (input[0] >= '0' && input[0] <= '9')) { //correct character
+        if(input[0]=='Y' || input[0]=='n' ){ //existing choices
+          return input[0];
+        }
+        else {
+          printf("Invalid choice entered!\n");
+          return -1;
+        }
+      }
+      else {
+        printf("Invalid character entered!\n");
+        return -1;
+      }
+    }
+    else{
+      printf("You have entered more than one character!\n");
+      return -1;
+    }
+  }
+  else{
+    printf("Error reading input\n");
+    return -1;
+  }
+}
+
 /*
   receiver /dev/ttyUSB0 19200
 */
@@ -112,31 +195,8 @@ int main(int argc, const char** argv) {
   const char* serial_device=argv[1];
   int baudrate=atoi(argv[2]);
   
-  char input[3];
-  char mode;
-  printf("o for online mode, q for query mode, c for clearing mode: ");
-
-  if(fgets(input, sizeof(input), stdin)){
-    if(input[1] == '\n' || input[1] == '\0'){
-      if ((input[0] >= 'a' && input[0] <= 'z') || (input[0] >= 'A' && input[0] <= 'Z') || (input[0] >= '0' && input[0] <= '9')) {
-        if(input[0]=='o' || input[0]=='q' || input[0]=='c'){
-          mode = input[0];
-        }
-        else {
-          printf("Invalid mode entered!\n");
-        }
-      }
-      else {
-        printf("Invalid character entered!\n");
-      }
-    }
-    else{
-      printf("You have entered more than one character!\n");
-    }
-  }
-  else {
-    printf("Error reading from input!\n");
-  }
+  //read from stdin
+  char mode = input_mode();
 
   //serial setup
   int fd = serial_open(serial_device);
@@ -145,19 +205,9 @@ int main(int argc, const char** argv) {
   
   // online mode 
   if (mode == 'o') {
-    // user input
-    char input[10];
-    int sampling_interval;
-    printf("desired sampling interval: ");
-    if (fgets(input, sizeof(input), stdin) != NULL) {
-      sampling_interval = atoi(input);
-      if (sampling_interval < 0) {
-        printf("Wrong sampling interval\n");
-      }
-    } 
-    else {
-      printf("Error reading input\n");
-    }
+    //read from stdin
+    int sampling_interval = input_sampling();    
+    
     //send special_message to arduino
     special_message sm = {sampling_interval, mode};
     UART_send_special_message(fd, &sm);
@@ -173,26 +223,25 @@ int main(int argc, const char** argv) {
   else if (mode == 'q') { 
     special_message sm = {0, mode};
     UART_send_special_message(fd, &sm);
+    //TODO
     amp_value amp;
     amp = UART_read_amp(fd);
     print_amp(amp);
-    
   }
 
   // clearing mode
   else if (mode == 'c') {
-    char confirmation;
-    printf("Are you sure you want to clear the array? (y/n): ");
-    confirmation = getchar();
+    //read from stdin
+    char confirmation = input_confirmation();
     
-    if (confirmation == 'y') {
+    if (confirmation == 'Y') {
       special_message sm = {0, mode};
       UART_send_special_message(fd, &sm);
+      printf("Memory cleared\n");
     }
-    else {
-      printf("Wrong confirmation\n");
+    else{
+      printf("Memory not cleared\n");
     }
-    clear_input_buffer();
   }
 
   return 0;

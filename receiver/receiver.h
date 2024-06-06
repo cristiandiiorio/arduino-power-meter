@@ -19,3 +19,9 @@ void serial_set_blocking(int fd, int should_block);
 void print_amp(amp_value amp);
 
 amp_value UART_read_amp(int fd);
+
+char input_mode(void);
+
+int input_sampling(void);
+
+char input_confirmation(void);
