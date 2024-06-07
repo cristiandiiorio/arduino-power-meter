@@ -1,10 +1,9 @@
 #include "meter.h"
 #include <math.h>
 
-#define BUFFER_SIZE 1000
-
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
+volatile uint8_t uart_received_flag = 0;
 
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
@@ -69,10 +68,13 @@ float calculate_rms(float *buffer, uint16_t size) {
 }
 
 ISR(TIMER5_COMPA_vect) {
-  timer_flag = 1; // Set the flag to indicate timer overflow
+  timer_flag = 1; //set the flag to indicate timer overflow
   measurement_count++;
 }
 
+ISR(USART0_RX_vect) {
+  uart_received_flag = 1; //set the flag to indicate that a message has been received
+}
 
 int main(void){
   //INITIALIZATION ZONE
@@ -80,48 +82,66 @@ int main(void){
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
 
-  //----------------------------------------------------//
-  //DETACHED MODE (NO RECEIVER CONNECTED)
-
-
-  //----------------------------------------------------//
-  //USER MODE (RECEIVER CONNECTED)
-  special_message sm = UART_read_special_message();
-
-  //ONLINE MODE
-  if(sm.mode=='o'){
+  while(1){
+    //------------------------------------------------------------------//
+    //DETACHED MODE (NO RECEIVER CONNECTED)
     TCCR5A = 0;
     TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
-    const int time = sm.payload;
-    uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
+    uint16_t ocrval = (uint16_t)(15.625 * 1000); //one measurement every second
     OCR5A = ocrval;
 
     disable_interrupts();
     TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
     enable_interrupts();
 
-    while(1){
-      if(timer_flag){
-        timer_flag = 0;
+    while(measurement_count < ARRAY_SIZE && !uart_received_flag){
+      amp_value amp = {0, 0};
+      amp.current = adc_read() ; // TODO:Calculate RMS value
+      amp.timestamp = measurement_count;
       
-        amp_value amp = {0, 0};
-        amp.current = adc_read() ; // TODO:Calculate RMS value
-        amp.timestamp = measurement_count;
+      amp_array[measurement_count] = amp; // Storing amp in array
+    }
+    //------------------------------------------------------------------//
+    //USER MODE (RECEIVER CONNECTED)
+    if(uart_received_flag){
+      uart_received_flag = 0;
+      
+      //read message
+      special_message sm = UART_read_special_message();
 
+      //ONLINE MODE
+      if(sm.mode=='o'){
+        TCCR5A = 0;
+        TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
+        const int time = sm.payload;
+        uint16_t ocrval = (uint16_t)(15.625 * 1000 * time); //one measurement every x seconds
+        OCR5A = ocrval;
+
+        disable_interrupts();
+        TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+        enable_interrupts();
+
+        while(1){
+          if(timer_flag){
+            timer_flag = 0;
+          
+            amp_value amp = {0, 0};
+            amp.current = adc_read() ; // TODO:Calculate RMS value
+            amp.timestamp = measurement_count;
+
+            UART_send_amp_binary(&amp);
+          }
+        }
+      }
+      //QUERY MODE TODO
+      else if(sm.mode=='q'){
+        amp_value amp = {0, 0};
         UART_send_amp_binary(&amp);
-        
-        amp_array[measurement_count] = amp; // Storing amp in array
+      }
+      //CLEARING MODE
+      else if(sm.mode=='c'){
+        memset(amp_array, 0, sizeof(amp_array));
       }
     }
   }
-  //QUERY MODE
-  else if(sm.mode=='q'){
-    amp_value amp = {0, 0};
-    UART_send_amp_binary(&amp);
-  }
-  //CLEARING MODE
-  else if(sm.mode=='c'){
-    memset(amp_array, 0, sizeof(amp_array));
-  }
-  
 }
