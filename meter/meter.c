@@ -111,6 +111,8 @@ int main(void){
 
       //ONLINE MODE
       if(sm.mode=='o'){
+        //TODO: Cambiare timer
+        /*
         TCCR5A = 0;
         TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
         const int time = sm.payload;
@@ -120,7 +122,7 @@ int main(void){
         disable_interrupts();
         TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
         enable_interrupts();
-
+        */
         while(1){
           if(timer_flag){
             timer_flag = 0;
