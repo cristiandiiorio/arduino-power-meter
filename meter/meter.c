@@ -1,9 +1,12 @@
 #include "meter.h"
-#include <math.h>
 
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
-volatile uint8_t uart_received_flag = 0;
+
+volatile special_message received_message;
+volatile uint8_t message_received = 0;
+volatile uint8_t* sm_ptr;
+volatile uint8_t sm_index = 0;
 
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
@@ -67,83 +70,68 @@ float calculate_rms(float *buffer, uint16_t size) {
   return rms;
 }
 
+/*
 ISR(TIMER5_COMPA_vect) {
   timer_flag = 1; //set the flag to indicate timer overflow
   measurement_count++;
 }
+*/
 
 ISR(USART0_RX_vect) {
-  uart_received_flag = 1; //set the flag to indicate that a message has been received
+  // Read the received byte
+  uint8_t received_byte = UDR0;
+
+  // Store the byte in the special_message structure
+  sm_ptr[sm_index++] = received_byte;
+
+  // Check if the entire message has been received
+  if (sm_index >= sizeof(special_message)) {
+    sm_index = 0;  // Reset index for the next message
+    message_received = 1;  // Indicate that a message has been received
+  }
 }
 
-int main(void){
-  //INITIALIZATION ZONE
+
+int main(void) {
   UART_init();
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
 
-  while(1){
-    //------------------------------------------------------------------//
-    //DETACHED MODE (NO RECEIVER CONNECTED)
-    TCCR5A = 0;
-    TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
-    uint16_t ocrval = (uint16_t)(15.625 * 1000); //one measurement every second
-    OCR5A = ocrval;
+  // Initialize pointer to the special_message structure
+  sm_ptr = (uint8_t*)&received_message;
+  
+  // Enable global interrupts
+  sei();
 
-    disable_interrupts();
-    TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
-    enable_interrupts();
-
-    while(measurement_count < ARRAY_SIZE && !uart_received_flag){
-      amp_value amp = {0, 0};
-      amp.current = adc_read() ; // TODO:Calculate RMS value
-      amp.timestamp = measurement_count;
-      
-      amp_array[measurement_count] = amp; // Storing amp in array
-    }
-    //------------------------------------------------------------------//
-    //USER MODE (RECEIVER CONNECTED)
-    if(uart_received_flag){
-      uart_received_flag = 0;
-      
-      //read message
-      special_message sm = UART_read_special_message();
-
-      //ONLINE MODE
-      if(sm.mode=='o'){
-        //TODO: Cambiare timer
-        /*
-        TCCR5A = 0;
-        TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
-        const int time = sm.payload;
-        uint16_t ocrval = (uint16_t)(15.625 * 1000 * time); //one measurement every x seconds
-        OCR5A = ocrval;
-
-        disable_interrupts();
-        TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
-        enable_interrupts();
-        */
-        while(1){
-          if(timer_flag){
-            timer_flag = 0;
-          
-            amp_value amp = {0, 0};
-            amp.current = adc_read() ; // TODO:Calculate RMS value
-            amp.timestamp = measurement_count;
-
-            UART_send_amp_binary(&amp);
-          }
-        }
-      }
-      //QUERY MODE TODO
-      else if(sm.mode=='q'){
-        amp_value amp = {0, 0};
+  while (1) {
+    if (message_received) {
+      // Process the received message
+      special_message sm = received_message;
+      if(sm.mode == 'o'){
+        amp_value amp = {1, 1};
         UART_send_amp_binary(&amp);
       }
-      //CLEARING MODE
-      else if(sm.mode=='c'){
-        memset(amp_array, 0, sizeof(amp_array));
+      if(sm.mode == 'q'){
+        amp_value amp = {2, 2};
+        UART_send_amp_binary(&amp);
       }
+      if(sm.mode == 'c'){
+        amp_value amp = {3, 3};
+        UART_send_amp_binary(&amp);
+      }
+      else{
+        amp_value amp = {4, 4};
+        UART_send_amp_binary(&amp);
+      }
+      
+
+      // Reset the message_received flag
+      message_received = 0;
+      
     }
+
+    // Main program logic 
   }
+
+  return 0;
 }
