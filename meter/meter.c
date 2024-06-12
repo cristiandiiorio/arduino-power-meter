@@ -113,15 +113,17 @@ int main(void) {
         amp.timestamp = measurement_count;
         UART_send_amp_binary(&amp);
       }
-      if(sm.mode == 'q'){
+      else if(sm.mode == 'q'){
         amp_value amp = {2, 2};
         UART_send_amp_binary(&amp);
       }
-      if(sm.mode == 'c'){
+      else if(sm.mode == 'c'){
+        amp_value amp = {2, 2};
+        UART_send_amp_binary(&amp);
         //memset(amp_array, 0, sizeof(amp_array));
       }
       else{
-        amp_value amp = {4, 4};
+        amp_value amp = {2, 2};
         UART_send_amp_binary(&amp);
       }
       
