@@ -108,7 +108,9 @@ int main(void) {
       // Process the received message
       special_message sm = received_message;
       if(sm.mode == 'o'){
-        amp_value amp = {1, 1};
+        amp_value amp = {0, 0};
+        amp.current = adc_read() ; // TODO:Calculate RMS value
+        amp.timestamp = measurement_count;
         UART_send_amp_binary(&amp);
       }
       if(sm.mode == 'q'){
@@ -116,8 +118,7 @@ int main(void) {
         UART_send_amp_binary(&amp);
       }
       if(sm.mode == 'c'){
-        amp_value amp = {3, 3};
-        UART_send_amp_binary(&amp);
+        //memset(amp_array, 0, sizeof(amp_array));
       }
       else{
         amp_value amp = {4, 4};
