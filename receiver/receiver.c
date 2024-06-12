@@ -96,7 +96,11 @@ void UART_send_special_message(int fd, special_message *msg) {
   uint8_t* msg_ptr = (uint8_t*) msg;
   int i = 0;
   while(i < sizeof(special_message)){
-    write(fd, &msg_ptr[i], sizeof(uint8_t));
+    ssize_t bytes_written = write(fd, &msg_ptr[i], sizeof(uint8_t));
+    if (bytes_written < 0) {
+      printf("Error writing to serial port\n");
+      return;
+    }
     i++;
   }
 }
@@ -224,8 +228,7 @@ int main(int argc, const char** argv) {
     special_message sm = {0, mode};
     UART_send_special_message(fd, &sm);
     //TODO
-    amp_value amp;
-    amp = UART_read_amp(fd);
+    amp_value amp = UART_read_amp(fd);
     print_amp(amp);
   }
 
@@ -237,6 +240,7 @@ int main(int argc, const char** argv) {
     if (confirmation == 'Y') {
       special_message sm = {0, mode};
       UART_send_special_message(fd, &sm);
+      //TODO Add a check for a return message from arduino
       printf("Memory cleared\n");
     }
     else{
