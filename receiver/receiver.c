@@ -81,7 +81,7 @@ amp_value UART_read_amp(int fd) {
   amp_value amp = {0, 0};
 
   bytes_read = read(fd, &amp, sizeof(amp_value));
-  // printf("bytes read: %d\n", bytes_read);
+  printf("bytes read: %d\n", bytes_read);
   if (bytes_read == sizeof(amp_value)) {
     total_bytes_read += bytes_read;
   } else {
@@ -101,8 +101,10 @@ void UART_send_special_message(int fd, special_message *msg) {
       printf("Error writing to serial port\n");
       return;
     }
+    printf("Wrote byte: %02X\n", msg_ptr[i]); // Print the byte being written
     i++;
   }
+  printf("Sent special message\n");
 }
 
 char input_mode(void){

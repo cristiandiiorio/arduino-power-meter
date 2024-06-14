@@ -6,7 +6,7 @@ volatile uint16_t measurement_count = 0;
 volatile special_message received_message;
 volatile uint8_t message_received = 0;
 volatile uint8_t* sm_ptr;
-volatile uint8_t sm_index = 0;
+volatile int sm_index = 0;
 
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
@@ -24,7 +24,7 @@ special_message UART_read_special_message(void) {
   int i = 0;
 
   while(i < sizeof(special_message)){
-    uint8_t c = UART_getChar();
+    uint8_t c = UDR0;
     *sm_ptr = c;
     ++sm_ptr;
     ++i;
@@ -78,11 +78,15 @@ ISR(TIMER5_COMPA_vect) {
 */
 
 ISR(USART0_RX_vect) {
+  // Initialize pointer to the special message structure
+  sm_ptr = (uint8_t*)&received_message;
   // Read the received byte
-  uint8_t received_byte = UDR0;
+  uint8_t received_byte = UART_getChar();
 
   // Store the byte in the special_message structure
-  sm_ptr[sm_index++] = received_byte;
+  *sm_ptr = received_byte;
+  ++sm_ptr;
+  ++sm_index;
 
   // Check if the entire message has been received
   if (sm_index >= sizeof(special_message)) {
@@ -96,9 +100,6 @@ int main(void) {
   UART_init();
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
-
-  // Initialize pointer to the special_message structure
-  sm_ptr = (uint8_t*)&received_message;
   
   // Enable global interrupts
   sei();
@@ -106,28 +107,27 @@ int main(void) {
   while (1) {
     if (message_received) {
       // Process the received message
-      special_message sm = received_message;
-      if(sm.mode == 'o'){
+      /*
+      if(received_message.mode == 'o'){
         amp_value amp = {0, 0};
         amp.current = adc_read() ; // TODO:Calculate RMS value
         amp.timestamp = measurement_count;
         UART_send_amp_binary(&amp);
       }
-      else if(sm.mode == 'q'){
+      else if(received_message.mode == 'q'){
         amp_value amp = {2, 2};
         UART_send_amp_binary(&amp);
       }
-      else if(sm.mode == 'c'){
+      else if(received_message.mode == 'c'){
         amp_value amp = {2, 2};
         UART_send_amp_binary(&amp);
         //memset(amp_array, 0, sizeof(amp_array));
-      }
-      else{
-        amp_value amp = {2, 2};
-        UART_send_amp_binary(&amp);
-      }
+      }*/
       
-
+      amp_value amp = {0,received_message.payload};
+      UART_send_amp_binary(&amp);
+    
+      
       // Reset the message_received flag
       message_received = 0;
       
