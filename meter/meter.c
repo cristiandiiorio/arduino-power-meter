@@ -6,6 +6,11 @@
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
 
+volatile special_message received_message;
+volatile uint8_t message_received = 0;
+volatile uint8_t* sm_ptr;
+volatile int sm_index = 0;
+
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
   int i = 0;
@@ -72,6 +77,25 @@ ISR(TIMER5_COMPA_vect) {
   measurement_count++;
 }
 
+ISR(USART0_RX_vect) {
+  // Initialize pointer to the special message structure
+  sm_ptr = (uint8_t*)&received_message;
+  // Read the received byte
+  uint8_t received_byte = UART_getChar();
+
+  // Store the byte in the special_message structure
+  *sm_ptr = received_byte;
+  ++sm_ptr;
+  ++sm_index;
+
+  // Check if the entire message has been received
+  if (sm_index >= sizeof(special_message)) {
+    sm_index = 0;  // Reset index for the next message
+    message_received = 1;  // Indicate that a message has been received
+  }
+}
+
+
 
 int main(void){
   //INITIALIZATION ZONE
@@ -85,42 +109,49 @@ int main(void){
 
   //----------------------------------------------------//
   //USER MODE (RECEIVER CONNECTED)
-  special_message sm = UART_read_special_message();
+  while(1){
+    if(message_received){
+      special_message sm = received_message;
+      //ONLINE MODE
+      if(sm.mode=='o'){
+        TCCR5A = 0;
+        TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
+        const int time = sm.payload;
+        uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
+        OCR5A = ocrval;
 
-  //ONLINE MODE
-  if(sm.mode=='o'){
-    TCCR5A = 0;
-    TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
-    const int time = sm.payload;
-    uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
-    OCR5A = ocrval;
+        disable_interrupts();
+        TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+        enable_interrupts();
 
-    disable_interrupts();
-    TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
-    enable_interrupts();
+        while(1){
+          if(timer_flag){
+            timer_flag = 0;
+          
+            amp_value amp = {0, 0};
+            amp.current = adc_read() ; // TODO:Calculate RMS value
+            amp.timestamp = measurement_count;
 
-    while(1){
-      if(timer_flag){
-        timer_flag = 0;
-      
-        amp_value amp = {0, 0};
-        amp.current = adc_read() ; // TODO:Calculate RMS value
-        amp.timestamp = measurement_count;
-
-        UART_send_amp_binary(&amp);
-        
-        amp_array[measurement_count] = amp; // Storing amp in array
+            UART_send_amp_binary(&amp);
+            
+            amp_array[measurement_count] = amp; // Storing amp in array
+          }
+        }
       }
+      //QUERY MODE
+      else if(sm.mode=='q'){
+        amp_value amp = {0, 0};
+        UART_send_amp_binary(&amp);
+      }
+      //CLEARING MODE
+      else if(sm.mode=='c'){
+        memset(amp_array, 0, sizeof(amp_array));
+      }
+      message_received = 0;
+
     }
   }
-  //QUERY MODE
-  else if(sm.mode=='q'){
-    amp_value amp = {0, 0};
-    UART_send_amp_binary(&amp);
-  }
-  //CLEARING MODE
-  else if(sm.mode=='c'){
-    memset(amp_array, 0, sizeof(amp_array));
-  }
+
+  
   
 }
