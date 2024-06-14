@@ -62,6 +62,7 @@ float adc_read(void) {
   return ADC; 
 }
 
+
 float calculate_rms(float *buffer, uint16_t size) {
   float sum_of_squares = 0;
   for (uint16_t i = 0; i < size; i++) {
