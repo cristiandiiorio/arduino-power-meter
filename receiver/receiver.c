@@ -206,13 +206,14 @@ int main(int argc, const char** argv) {
   // online mode 
   if (mode == 'o') {
     //read from stdin
-    int sampling_interval = input_sampling();    
+    uint8_t sampling_interval = input_sampling();    
     
-    //send special_message to arduino
-    UART_send_special_message(fd, mode);
+    //send sampling_interval itself, 
+    //it fits into a byte since it can only go up to 60
+    UART_send_special_message(fd, sampling_interval);
 
+    //read from arduino
     while(1){
-      //read from arduino
       amp_value amp = UART_read_amp(fd);
       print_amp(amp);
     }

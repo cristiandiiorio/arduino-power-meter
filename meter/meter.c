@@ -61,8 +61,8 @@ float calculate_rms(float *buffer, uint16_t size) {
 ISR(TIMER5_COMPA_vect) {
   timer_flag = 1; //set the flag to indicate timer overflow
   measurement_count++;
-}
-*/
+}*/
+
 
 ISR(USART0_RX_vect) {
   mode = UDR0; //read byte from UART representing MODE
@@ -80,16 +80,9 @@ int main(void) {
 
   while (1) {
     if(uart_flag){
-      uart_flag = 0;
-      if(mode == 'o'){
-        while(1){
-          amp_value amp = {0, 0};
-          amp.current = adc_read() ; // TODO:Calculate RMS value
-          amp.timestamp = measurement_count;
-          UART_send_amp_binary(&amp);
-        }
-      }
-      else if(mode == 'q'){
+      uart_flag = 0; //reset flag
+
+      if(mode == 'q'){
         amp_value amp = {2, 2};
         UART_send_amp_binary(&amp);
       }
@@ -98,12 +91,17 @@ int main(void) {
         UART_send_amp_binary(&amp);
         //memset(amp_array, 0, sizeof(amp_array));
       }
-      else{
-        amp_value amp = {3, 3};
-        UART_send_amp_binary(&amp);
+      else{ //mode == 'o'
+        while(1){
+          amp_value amp = {0, 0};
+          amp.current = mode ; // TODO:Calculate RMS value
+          amp.timestamp = measurement_count;
+          UART_send_amp_binary(&amp);
+        }
       }
     }
-    sleep_cpu();
+    
+    sleep_cpu(); //I SLEEP
   }
 
   return 0;
