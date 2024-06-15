@@ -25,3 +25,5 @@ char input_mode(void);
 int input_sampling(void);
 
 char input_confirmation(void);
+
+void UART_send_special_message(int fd, char msg);

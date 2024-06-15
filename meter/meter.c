@@ -3,11 +3,6 @@
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
 
-volatile special_message received_message;
-volatile uint8_t message_received = 0;
-volatile uint8_t* sm_ptr;
-volatile int sm_index = 0;
-
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
   int i = 0;
@@ -16,20 +11,6 @@ void UART_send_amp_binary(amp_value *amp) {
     i++;
   }
 
-}
-
-special_message UART_read_special_message(void) {
-  special_message sm;
-  uint8_t* sm_ptr = (uint8_t*) &sm;
-  int i = 0;
-
-  while(i < sizeof(special_message)){
-    uint8_t c = UDR0;
-    *sm_ptr = c;
-    ++sm_ptr;
-    ++i;
-  }
-  return sm;
 }
 
 // Function to initialize the ADC
@@ -78,20 +59,30 @@ ISR(TIMER5_COMPA_vect) {
 */
 
 ISR(USART0_RX_vect) {
-  // Initialize pointer to the special message structure
-  sm_ptr = (uint8_t*)&received_message;
   // Read the received byte
-  uint8_t received_byte = UART_getChar();
+  uint8_t mode = UDR0;
 
-  // Store the byte in the special_message structure
-  *sm_ptr = received_byte;
-  ++sm_ptr;
-  ++sm_index;
-
-  // Check if the entire message has been received
-  if (sm_index >= sizeof(special_message)) {
-    sm_index = 0;  // Reset index for the next message
-    message_received = 1;  // Indicate that a message has been received
+  if(mode == 'o'){
+    while(1){
+      amp_value amp = {0, 0};
+      amp.current = adc_read() ; // TODO:Calculate RMS value
+      amp.timestamp = measurement_count;
+      UART_send_amp_binary(&amp);
+    }
+    
+  }
+  else if(mode == 'q'){
+    amp_value amp = {2, 2};
+    UART_send_amp_binary(&amp);
+  }
+  else if(mode == 'c'){
+    amp_value amp = {2, 2};
+    UART_send_amp_binary(&amp);
+    //memset(amp_array, 0, sizeof(amp_array));
+  }
+  else{
+    amp_value amp = {3, 3};
+    UART_send_amp_binary(&amp);
   }
 }
 
@@ -105,35 +96,7 @@ int main(void) {
   sei();
 
   while (1) {
-    if (message_received) {
-      // Process the received message
-      /*
-      if(received_message.mode == 'o'){
-        amp_value amp = {0, 0};
-        amp.current = adc_read() ; // TODO:Calculate RMS value
-        amp.timestamp = measurement_count;
-        UART_send_amp_binary(&amp);
-      }
-      else if(received_message.mode == 'q'){
-        amp_value amp = {2, 2};
-        UART_send_amp_binary(&amp);
-      }
-      else if(received_message.mode == 'c'){
-        amp_value amp = {2, 2};
-        UART_send_amp_binary(&amp);
-        //memset(amp_array, 0, sizeof(amp_array));
-      }*/
-      
-      amp_value amp = {0,received_message.payload};
-      UART_send_amp_binary(&amp);
-    
-      
-      // Reset the message_received flag
-      message_received = 0;
-      
-    }
-
-    // Main program logic 
+    sleep_cpu();
   }
 
   return 0;

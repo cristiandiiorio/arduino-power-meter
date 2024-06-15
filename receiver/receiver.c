@@ -92,19 +92,13 @@ amp_value UART_read_amp(int fd) {
   return amp;
 }
 
-void UART_send_special_message(int fd, special_message *msg) {
-  uint8_t* msg_ptr = (uint8_t*) msg;
-  int i = 0;
-  while(i < sizeof(special_message)){
-    ssize_t bytes_written = write(fd, &msg_ptr[i], sizeof(uint8_t));
-    if (bytes_written < 0) {
-      printf("Error writing to serial port\n");
-      return;
-    }
-    printf("Wrote byte: %02X\n", msg_ptr[i]); // Print the byte being written
-    i++;
+void UART_send_special_message(int fd, char msg) {
+  ssize_t bytes_written = write(fd, &msg, sizeof(char));
+  if (bytes_written < 0) {
+    printf("Error writing to serial port\n");
+    return;
   }
-  printf("Sent special message\n");
+  printf("Sent char: %c\n", msg);
 }
 
 char input_mode(void){
@@ -208,15 +202,14 @@ int main(int argc, const char** argv) {
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
   serial_set_blocking(fd, blocking_status);
-  
+
   // online mode 
   if (mode == 'o') {
     //read from stdin
     int sampling_interval = input_sampling();    
     
     //send special_message to arduino
-    special_message sm = {sampling_interval, mode};
-    UART_send_special_message(fd, &sm);
+    UART_send_special_message(fd, mode);
 
     while(1){
       //read from arduino
@@ -227,8 +220,7 @@ int main(int argc, const char** argv) {
 
   // query mode TODO
   else if (mode == 'q') { 
-    special_message sm = {0, mode};
-    UART_send_special_message(fd, &sm);
+    UART_send_special_message(fd, mode);
     //TODO
     amp_value amp = UART_read_amp(fd);
     print_amp(amp);
@@ -240,10 +232,12 @@ int main(int argc, const char** argv) {
     char confirmation = input_confirmation();
     
     if (confirmation == 'Y') {
-      special_message sm = {0, mode};
-      UART_send_special_message(fd, &sm);
+      UART_send_special_message(fd, mode);
       //TODO Add a check for a return message from arduino
       printf("Memory cleared\n");
+      
+      amp_value amp = UART_read_amp(fd);
+      print_amp(amp);
     }
     else{
       printf("Memory not cleared\n");
