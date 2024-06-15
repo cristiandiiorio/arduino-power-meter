@@ -232,15 +232,18 @@ int main(int argc, const char** argv) {
     char confirmation = input_confirmation();
     
     if (confirmation == 'Y') {
+      //send special_message to arduino
       UART_send_special_message(fd, mode);
-      //TODO Add a check for a return message from arduino
-      printf("Memory cleared\n");
-      
+      //read from arduino
       amp_value amp = UART_read_amp(fd);
-      print_amp(amp);
-    }
-    else{
-      printf("Memory not cleared\n");
+      
+      //check to see if memory has been cleared
+      if(amp.current == -1){
+        printf("Memory cleared\n");
+      }
+      else{
+        printf("Memory not cleared\n");
+      }
     }
   }
 

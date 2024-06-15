@@ -69,14 +69,13 @@ ISR(USART0_RX_vect) {
       amp.timestamp = measurement_count;
       UART_send_amp_binary(&amp);
     }
-    
   }
   else if(mode == 'q'){
     amp_value amp = {2, 2};
     UART_send_amp_binary(&amp);
   }
   else if(mode == 'c'){
-    amp_value amp = {2, 2};
+    amp_value amp = {-1, 0}; // -1 indicates memory cleared
     UART_send_amp_binary(&amp);
     //memset(amp_array, 0, sizeof(amp_array));
   }
