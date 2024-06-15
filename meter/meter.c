@@ -57,11 +57,11 @@ float calculate_rms(float *buffer, uint16_t size) {
   return rms;
 }
 
-/*
+
 ISR(TIMER5_COMPA_vect) {
   timer_flag = 1; //set the flag to indicate timer overflow
   measurement_count++;
-}*/
+}
 
 
 ISR(USART0_RX_vect) {
@@ -75,8 +75,7 @@ int main(void) {
   adc_init();
   amp_value amp_array[ARRAY_SIZE];
   
-  // Enable global interrupts
-  sei();
+  enable_interrupts();
 
   while (1) {
     if(uart_flag){
@@ -92,11 +91,24 @@ int main(void) {
         //memset(amp_array, 0, sizeof(amp_array));
       }
       else{ //mode == 'o'
+        TCCR5A = 0; 
+        TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
+        const uint8_t time = mode;
+        uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
+        OCR5A = ocrval;
+
+        disable_interrupts();
+        TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+        enable_interrupts();
+
         while(1){
-          amp_value amp = {0, 0};
-          amp.current = mode ; // TODO:Calculate RMS value
-          amp.timestamp = measurement_count;
-          UART_send_amp_binary(&amp);
+          if(timer_flag){
+            amp_value amp = {0, 0};
+            amp.current = adc_read(); // TODO:Calculate RMS value
+            amp.timestamp = measurement_count;
+            UART_send_amp_binary(&amp);
+            amp_array[measurement_count] = amp; // Storing amp in array
+          }
         }
       }
     }
