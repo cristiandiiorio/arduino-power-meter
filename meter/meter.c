@@ -1,7 +1,13 @@
 #include "meter.h"
 
+//UART Global Variables
+volatile uint8_t mode;
+volatile uint8_t uart_flag = 0;
+
+//Timer Global Variables
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
+
 
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
@@ -59,30 +65,8 @@ ISR(TIMER5_COMPA_vect) {
 */
 
 ISR(USART0_RX_vect) {
-  // Read the received byte
-  uint8_t mode = UDR0;
-
-  if(mode == 'o'){
-    while(1){
-      amp_value amp = {0, 0};
-      amp.current = adc_read() ; // TODO:Calculate RMS value
-      amp.timestamp = measurement_count;
-      UART_send_amp_binary(&amp);
-    }
-  }
-  else if(mode == 'q'){
-    amp_value amp = {2, 2};
-    UART_send_amp_binary(&amp);
-  }
-  else if(mode == 'c'){
-    amp_value amp = {-1, 0}; // -1 indicates memory cleared
-    UART_send_amp_binary(&amp);
-    //memset(amp_array, 0, sizeof(amp_array));
-  }
-  else{
-    amp_value amp = {3, 3};
-    UART_send_amp_binary(&amp);
-  }
+  mode = UDR0; //read byte from UART representing MODE
+  uart_flag = 1;
 }
 
 
@@ -95,6 +79,30 @@ int main(void) {
   sei();
 
   while (1) {
+    if(uart_flag){
+      uart_flag = 0;
+      if(mode == 'o'){
+        while(1){
+          amp_value amp = {0, 0};
+          amp.current = adc_read() ; // TODO:Calculate RMS value
+          amp.timestamp = measurement_count;
+          UART_send_amp_binary(&amp);
+        }
+      }
+      else if(mode == 'q'){
+        amp_value amp = {2, 2};
+        UART_send_amp_binary(&amp);
+      }
+      else if(mode == 'c'){
+        amp_value amp = {-1, 0}; // -1 indicates memory cleared
+        UART_send_amp_binary(&amp);
+        //memset(amp_array, 0, sizeof(amp_array));
+      }
+      else{
+        amp_value amp = {3, 3};
+        UART_send_amp_binary(&amp);
+      }
+    }
     sleep_cpu();
   }
 

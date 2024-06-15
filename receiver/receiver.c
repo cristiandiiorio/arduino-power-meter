@@ -243,6 +243,7 @@ int main(int argc, const char** argv) {
       }
       else{
         printf("Memory not cleared\n");
+        print_amp(amp);
       }
     }
   }
