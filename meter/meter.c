@@ -105,9 +105,11 @@ int main(void) {
           if(timer_flag){
             amp_value amp = {0, 0};
             amp.current = adc_read(); // TODO:Calculate RMS value
-            amp.timestamp = measurement_count;
+            amp.timestamp = measurement_count  * time;
             UART_send_amp_binary(&amp);
             amp_array[measurement_count] = amp; // Storing amp in array
+
+            timer_flag = 0; //reset flag
           }
         }
       }
