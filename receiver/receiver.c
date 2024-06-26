@@ -2,6 +2,8 @@
 
 #define blocking_status 1
 
+int fd;
+
 int serial_set_interface_attribs(int fd, int speed, int parity) {
   struct termios tty;
   memset (&tty, 0, sizeof tty);
@@ -44,6 +46,13 @@ int serial_set_interface_attribs(int fd, int speed, int parity) {
     printf ("error %d from tcsetattr", errno);
     return -1;
   }
+
+  // Clear input and output buffers
+  if (tcflush(fd, TCIOFLUSH) != 0) {
+    perror("tcflush");
+    return -1;
+  }
+
   return 0;
 }
 
@@ -202,7 +211,7 @@ int main(void) {
   const int baudrate = 19200;
   
   //serial setup
-  int fd = serial_open(serial_device);
+  fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
   serial_set_blocking(fd, blocking_status);
 

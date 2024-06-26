@@ -4,6 +4,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 #include "../avr_common/common.h"
 
