@@ -99,7 +99,7 @@ int main(void) {
     TIMSK3 |= (1 << OCIE3A); // enable timer interrupt
     enable_interrupts();
 
-    while(!uart_flag){ //serial not connected 
+    while(!uart_flag){ //serial not connected
       if(timer_flag){
         timer_flag = 0; //reset flag
 
@@ -108,7 +108,7 @@ int main(void) {
         amp.timestamp = measurement_count;
         UART_send_amp_binary(&amp);
 
-        amp_array[measurement_count] = amp; // Storing amp in array
+        
       }
 
       sleep_cpu(); //I SLEEP
