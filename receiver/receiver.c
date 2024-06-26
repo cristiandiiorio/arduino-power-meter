@@ -208,9 +208,13 @@ void signal_handler(int signum){
   receiver /dev/ttyUSB0 19200
 */
 
-int main(void) {
+int main(int argc, const char** argv) {
   signal(SIGINT, signal_handler);
-  const char* serial_device="/dev/ttyUSB0";
+  if (argc < 2) {
+    printf("receiver <serial_file>\n");
+    return -1;
+  }
+  const char* serial_device=argv[1];
   const int baudrate = 19200;
   
   //serial setup
