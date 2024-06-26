@@ -29,7 +29,7 @@ int serial_set_interface_attribs(int fd, int speed, int parity) {
     speed=B921600;
     break;
   default:
-    printf("cannot sed baudrate %d\n", speed);
+    printf("cannot set baudrate %d\n", speed);
     return -1;
   }
   cfsetospeed (&tty, speed);
