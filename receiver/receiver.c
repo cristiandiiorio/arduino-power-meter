@@ -188,12 +188,9 @@ char input_confirmation(void){
   receiver /dev/ttyUSB0 19200
 */
 
-int main(int argc, const char** argv) {
-  if (argc < 3) {
-    printf("receiver <serial_file> <baudrate>\n");
-  }
-  const char* serial_device=argv[1];
-  int baudrate=atoi(argv[2]);
+int main(void) {
+  const char* serial_device="/dev/ttyUSB0";
+  const int baudrate = 19200;
   
   //read from stdin
   char mode = input_mode();
