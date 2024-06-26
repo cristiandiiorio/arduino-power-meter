@@ -141,24 +141,27 @@ char input_mode(void){
   }
 }
 
-int input_sampling(void){
+uint8_t input_sampling(void){
   char input[4]; //Maximum of 60 seconds ==> 2 chars
-  int sampling_interval;
+  uint8_t sampling_interval;
   printf("Desired sampling interval: ");
   if (fgets(input, sizeof(input), stdin)) {
     if(input[2] == '\n' || input[2] == '\0'){ //correct length
       sampling_interval = atoi(input);
       if (sampling_interval < 0 || sampling_interval > 60) { //correct interval
         printf("Wrong sampling interval\n");
+        return 0;
       }
       return sampling_interval;
     }
     else {
       printf("You have entered more than two characters!\n");
+      return 0;
     }
   } 
   else {
     printf("Error reading input\n");
+    return 0;
   }
 }
 
@@ -222,7 +225,10 @@ int main(void) {
   if (mode == 'o') {
     //read from stdin
     uint8_t sampling_interval = input_sampling();    
-    
+    if(sampling_interval == 0){      
+      return -1;
+    }
+
     //send sampling_interval itself, 
     //it fits into a byte since it can only go up to 60
     UART_send_special_message(fd, sampling_interval);

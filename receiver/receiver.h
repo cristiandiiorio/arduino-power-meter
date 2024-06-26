@@ -23,7 +23,7 @@ amp_value UART_read_amp(int fd);
 
 char input_mode(void);
 
-int input_sampling(void);
+uint8_t input_sampling(void);
 
 char input_confirmation(void);
 
