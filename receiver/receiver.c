@@ -98,7 +98,7 @@ void UART_send_special_message(int fd, char msg) {
     printf("Error writing to serial port\n");
     return;
   }
-  printf("Sent char: %c\n", msg);
+  printf("Sent char: %x\n", msg);
 }
 
 char input_mode(void){
