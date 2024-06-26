@@ -79,9 +79,13 @@ int serial_open(const char* name) {
   return fd;
 }
 
-void print_amp(amp_value amp) {
-  printf("at time %ds current is %fA\n", amp.timestamp, amp.current);
-  // printf("%fmA\n",amp.current);
+void print_amp(amp_value amp, int selector) {
+  if(selector){
+    printf("At time %ds current is %.3fA\n", amp.timestamp, amp.current);
+  }
+  else{
+    printf(" |%.3fA| ", amp.current);
+  }
 }
 
 amp_value UART_read_amp(int fd) {
@@ -90,7 +94,7 @@ amp_value UART_read_amp(int fd) {
   amp_value amp = {0, 0};
 
   bytes_read = read(fd, &amp, sizeof(amp_value));
-  printf("bytes read: %d\n", bytes_read);
+  //printf("bytes read: %d\n", bytes_read);
   if (bytes_read == sizeof(amp_value)) {
     total_bytes_read += bytes_read;
   } else {
@@ -107,7 +111,7 @@ void UART_send_special_message(int fd, char msg) {
     printf("Error writing to serial port\n");
     return;
   }
-  printf("Sent char: %x\n", msg);
+  //printf("Sent char: %x\n", msg);
 }
 
 char input_mode(void){
@@ -240,7 +244,7 @@ int main(int argc, const char** argv) {
     //read from arduino
     while(1){
       amp_value amp = UART_read_amp(fd);
-      print_amp(amp);
+      print_amp(amp,1);
     }
   } 
 
@@ -248,8 +252,16 @@ int main(int argc, const char** argv) {
   else if (mode == 'q') { 
     UART_send_special_message(fd, mode);
     //TODO: receive all time storage locations and let the user choose which one to query
-    amp_value amp = UART_read_amp(fd);
-    print_amp(amp);
+    amp_value minutes[60];
+    for(int i=0;i<60;i++){
+      minutes[i] = UART_read_amp(fd);
+    }
+    printf("Last minute:  ");
+    for(int i=0;i<60;i++){
+      print_amp(minutes[i],0);
+    }
+    printf("\n");
+    
   }
 
   // clearing mode
@@ -269,7 +281,6 @@ int main(int argc, const char** argv) {
       }
       else{
         printf("Memory not cleared\n");
-        print_amp(amp);
       }
     }
   }

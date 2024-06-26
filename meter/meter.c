@@ -1,5 +1,11 @@
 #include "meter.h"
 
+#define SECONDS_IN_MINUTE 60
+#define MINUTES_IN_HOUR 60
+#define HOURS_IN_DAY 24
+#define DAYS_IN_MONTH 30
+#define MONTHS_IN_YEAR 12
+
 //UART Global Variables
 volatile uint8_t mode;
 volatile uint8_t uart_flag = 0;
@@ -9,14 +15,14 @@ volatile uint8_t online_flag = 0;
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
 
-//time 
-amp_value last_minute_array[60]; //contains amp_values for the last minute
-amp_value last_hour_array[60]; //contains amp_values for the last hour
-amp_value last_day_array[24]; //contains amp_values for the last day
-amp_value last_month_array[30]; //contains amp_values for the last month
-amp_value last_year_array[12]; //contains amp_values for the last year
+//time storage locations
+amp_value last_minute_array[SECONDS_IN_MINUTE]; // contains amp_values for the last minute
+amp_value last_hour_array[MINUTES_IN_HOUR]; // contains amp_values for the last hour
+amp_value last_day_array[HOURS_IN_DAY]; // contains amp_values for the last day
+amp_value last_month_array[DAYS_IN_MONTH]; // contains amp_values for the last month
+amp_value last_year_array[MONTHS_IN_YEAR]; // contains amp_values for the last year
 
-
+//Function to send amp_values over UART
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
   int i = 0;
@@ -27,7 +33,7 @@ void UART_send_amp_binary(amp_value *amp) {
 
 }
 
-// Function to initialize the ADC
+//Function to initialize the ADC
 void adc_init(void) {
   // Select Vref=AVcc
   ADMUX |= (1 << REFS0);
@@ -40,7 +46,7 @@ void adc_init(void) {
   ADCSRA |= (1 << ADEN);
 }
 
-// Function to read ADC channel 0
+//Function to read ADC channel 0
 float adc_read(void) {
   ADMUX = (ADMUX & 0xF8) | 0;  
 
@@ -62,6 +68,11 @@ float calculate_rms(float *buffer, uint16_t size) {
   float mean_of_squares = sum_of_squares / size;
   float rms = sqrt(mean_of_squares);
   return rms;
+}
+
+//Function to update the time storage locations
+void update_time_arrays(amp_value amp) {
+  last_minute_array[measurement_count % SECONDS_IN_MINUTE] = amp;
 }
 
 
@@ -100,8 +111,9 @@ int main(void) {
 
       if(mode == 'q'){
         //TODO: send all time storage locations over UART
-        amp_value amp = {2, 2};
-        UART_send_amp_binary(&amp);
+        for(int i = 0; i < MINUTES_IN_HOUR; i++){
+          UART_send_amp_binary(&last_minute_array[i]);
+        }
       }
       else if(mode == 'c'){
         //clears all time storage locations and send confirmation over UART
@@ -157,8 +169,9 @@ int main(void) {
           amp_value amp = {1, 1};
           amp.current = adc_read(); // TODO:Calculate RMS value
           amp.timestamp = measurement_count;
-          
-          //TODO: Storing amp in array
+
+          //TODO: Storing amp in the right array
+          update_time_arrays(amp);
         }
 
         sleep_cpu(); //I SLEEP
