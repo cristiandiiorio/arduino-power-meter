@@ -79,75 +79,78 @@ ISR(USART0_RX_vect) {
 int main(void) {
   UART_init();
   adc_init();
-  amp_value amp_array[ARRAY_SIZE];
+  amp_value amp_array[40];
   
   enable_interrupts();
 
   while (1) {
-    //DETACHED MODE
-    TCCR3A = 0;
-    TCCR3B = (1 << WGM32) | (1 << CS30) | (1 << CS32); // set up timer with prescaler = 1024
-    uint16_t ocrval = (uint16_t)(15.625 * 1000); //1 second
-    OCR3A = ocrval;
-
-    disable_interrupts();
-    TIMSK3 |= (1 << OCIE3A); // enable timer interrupt
-    enable_interrupts();
-
-    while(uart_flag == 0){ //serial not connected 
-      if(timer_flag){
-        timer_flag = 0; //reset flag
-
-        amp_value amp = {0, 0};
-        amp.current = adc_read(); // TODO:Calculate RMS value
-        amp.timestamp = measurement_count;
-        amp_array[measurement_count] = amp; // Storing amp in array
-      }
-
-      sleep_cpu(); //I SLEEP
-    }
-
-    //--------------------------------------------------------------//
     //USER MODE
-    uart_flag = 0; //reset flag
+    if(uart_flag){
+      uart_flag = 0; //reset flag
 
-    //disable && stop timer3 interrupt
-    TIMSK3 &= ~(1 << OCIE3A);
-    TCCR3B &= ~((1 << CS32) | (1 << CS31) | (1 << CS30));
+      //disable && stop timer3 interrupt
+      TIMSK3 &= ~(1 << OCIE3A);
+      TCCR3B &= ~((1 << CS32) | (1 << CS31) | (1 << CS30));
 
-    if(mode == 'q'){
-      amp_value amp = {2, 2};
-      UART_send_amp_binary(&amp);
+      if(mode == 'q'){
+        amp_value amp = {2, 2};
+        UART_send_amp_binary(&amp);
+      }
+      else if(mode == 'c'){
+        amp_value amp = {-1, 0}; // -1 indicates memory cleared
+        UART_send_amp_binary(&amp);
+        //memset(amp_array, 0, sizeof(amp_array));
+      }
+      else{ //mode == 'o'
+        TCCR5A = 0; 
+        TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
+        const uint8_t time = mode;
+        uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
+        OCR5A = ocrval;
+
+        disable_interrupts();
+        TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+        enable_interrupts();
+
+        while(1){
+          if(online_flag){
+            amp_value amp = {0, 0};
+            //amp.current = adc_read(); // TODO:Calculate RMS value
+            amp.timestamp = measurement_count  * time;
+            UART_send_amp_binary(&amp);
+
+            online_flag = 0; //reset flag
+          }
+
+          sleep_cpu(); //I SLEEP
+        }
+      }   
     }
-    else if(mode == 'c'){
-      amp_value amp = {-1, 0}; // -1 indicates memory cleared
-      UART_send_amp_binary(&amp);
-      //memset(amp_array, 0, sizeof(amp_array));
-    }
-    else{ //mode == 'o'
-      TCCR5A = 0; 
-      TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
-      const uint8_t time = mode;
-      uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
-      OCR5A = ocrval;
+    //DETACHED MODE
+    else{
+      TCCR3A = 0;
+      TCCR3B = (1 << WGM32) | (1 << CS30) | (1 << CS32); // set up timer with prescaler = 1024
+      uint16_t ocrval = (uint16_t)(15.625 * 1000); //1 second
+      OCR3A = ocrval;
 
       disable_interrupts();
-      TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+      TIMSK3 |= (1 << OCIE3A); // enable timer interrupt
       enable_interrupts();
 
-      while(1){
-        if(online_flag){
-          amp_value amp = {0, 0};
-          amp.current = adc_read(); // TODO:Calculate RMS value
-          amp.timestamp = measurement_count  * time;
-          UART_send_amp_binary(&amp);
+      while(uart_flag == 0){ //serial not connected 
+        if(timer_flag){
+          timer_flag = 0; //reset flag
 
-          online_flag = 0; //reset flag
+          amp_value amp = {1, 1};
+          amp.current = adc_read(); // TODO:Calculate RMS value
+          amp.timestamp = measurement_count;
+          amp_array[measurement_count] = amp; // Storing amp in array
         }
 
         sleep_cpu(); //I SLEEP
       }
-    }    
+    }
+     
   }
 
   return 0;

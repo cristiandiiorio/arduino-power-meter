@@ -184,11 +184,20 @@ char input_confirmation(void){
   }
 }
 
+void signal_handler(int signum){
+  if(signum == SIGINT){
+    fprintf(stderr,"Exiting program after CTRL+C \n");
+    close(fd);
+    exit(EXIT_SUCCESS);
+  }
+}
+
 /*
   receiver /dev/ttyUSB0 19200
 */
 
 int main(void) {
+  signal(SIGINT, signal_handler);
   const char* serial_device="/dev/ttyUSB0";
   const int baudrate = 19200;
   
@@ -245,6 +254,8 @@ int main(void) {
       }
     }
   }
+
+  close(fd);
 
   return 0;
 }
