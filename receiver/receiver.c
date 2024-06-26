@@ -218,8 +218,8 @@ int main(void) {
 
   // query mode TODO
   else if (mode == 'q') { 
+    //TODO: receive all time storage locations and let the user choose which one to query
     UART_send_special_message(fd, mode);
-    //TODO
     amp_value amp = UART_read_amp(fd);
     print_amp(amp);
   }

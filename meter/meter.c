@@ -9,6 +9,13 @@ volatile uint8_t online_flag = 0;
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
 
+//time 
+amp_value last_minute_array[60]; //contains amp_values for the last minute
+amp_value last_hour_array[60]; //contains amp_values for the last hour
+amp_value last_day_array[24]; //contains amp_values for the last day
+amp_value last_month_array[30]; //contains amp_values for the last month
+amp_value last_year_array[12]; //contains amp_values for the last year
+
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
   int i = 0;
@@ -78,12 +85,6 @@ ISR(USART0_RX_vect) {
 int main(void) {
   UART_init();
   adc_init();
-
-  amp_value last_minute_array[60]; //contains amp_values for the last minute
-  amp_value last_hour_array[60]; //contains amp_values for the last hour
-  amp_value last_day_array[24]; //contains amp_values for the last day
-  amp_value last_month_array[30]; //contains amp_values for the last month
-  amp_value last_year_array[12]; //contains amp_values for the last year
   
   enable_interrupts();
 
@@ -122,13 +123,15 @@ int main(void) {
     TCCR3B &= ~((1 << CS32) | (1 << CS31) | (1 << CS30));
 
     if(mode == 'q'){
+      //TODO: send all time storage locations over UART
       amp_value amp = {2, 2};
       UART_send_amp_binary(&amp);
     }
     else if(mode == 'c'){
+      //TODO: clear all time storage locations and send confirmation over UART
+      //memset(amp_array, 0, sizeof(amp_array)); 
       amp_value amp = {-1, 0}; // -1 indicates memory cleared
       UART_send_amp_binary(&amp);
-      //memset(amp_array, 0, sizeof(amp_array));
     }
     else{ //mode == 'o'
       TCCR5A = 0; 
