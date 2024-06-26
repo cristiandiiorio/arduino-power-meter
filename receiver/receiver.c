@@ -192,13 +192,13 @@ int main(void) {
   const char* serial_device="/dev/ttyUSB0";
   const int baudrate = 19200;
   
-  //read from stdin
-  char mode = input_mode();
-
   //serial setup
   int fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, baudrate, 0);
   serial_set_blocking(fd, blocking_status);
+
+  //read from stdin
+  char mode = input_mode();
 
   // online mode 
   if (mode == 'o') {
