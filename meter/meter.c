@@ -9,6 +9,13 @@ volatile uint8_t online_flag = 0;
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
 
+//time 
+amp_value last_minute_array[60]; //contains amp_values for the last minute
+amp_value last_hour_array[60]; //contains amp_values for the last hour
+amp_value last_day_array[24]; //contains amp_values for the last day
+amp_value last_month_array[30]; //contains amp_values for the last month
+amp_value last_year_array[12]; //contains amp_values for the last year
+
 
 void UART_send_amp_binary(amp_value *amp) {
   uint8_t* amp_ptr = (uint8_t*) amp;
@@ -47,7 +54,6 @@ float adc_read(void) {
   return ADC; 
 }
 
-
 float calculate_rms(float *buffer, uint16_t size) {
   float sum_of_squares = 0;
   for (uint16_t i = 0; i < size; i++) {
@@ -57,6 +63,7 @@ float calculate_rms(float *buffer, uint16_t size) {
   float rms = sqrt(mean_of_squares);
   return rms;
 }
+
 
 ISR(TIMER3_COMPA_vect) {
   timer_flag = 1; //set the flag to indicate timer overflow
@@ -79,7 +86,6 @@ ISR(USART0_RX_vect) {
 int main(void) {
   UART_init();
   adc_init();
-  amp_value amp_array[40];
   
   enable_interrupts();
 
@@ -93,13 +99,19 @@ int main(void) {
       TCCR3B &= ~((1 << CS32) | (1 << CS31) | (1 << CS30));
 
       if(mode == 'q'){
+        //TODO: send all time storage locations over UART
         amp_value amp = {2, 2};
         UART_send_amp_binary(&amp);
       }
       else if(mode == 'c'){
+        //clears all time storage locations and send confirmation over UART
+        memset(last_minute_array, 0, sizeof(last_minute_array));
+        memset(last_hour_array, 0, sizeof(last_hour_array));
+        memset(last_day_array, 0, sizeof(last_day_array));
+        memset(last_month_array, 0, sizeof(last_month_array));
+        memset(last_year_array, 0, sizeof(last_year_array));
         amp_value amp = {-1, 0}; // -1 indicates memory cleared
         UART_send_amp_binary(&amp);
-        //memset(amp_array, 0, sizeof(amp_array));
       }
       else{ //mode == 'o'
         TCCR5A = 0; 
@@ -117,6 +129,7 @@ int main(void) {
             amp_value amp = {0, 0};
             amp.current = adc_read(); // TODO:Calculate RMS value
             amp.timestamp = measurement_count  * time;
+            
             UART_send_amp_binary(&amp);
 
             online_flag = 0; //reset flag
@@ -144,7 +157,8 @@ int main(void) {
           amp_value amp = {1, 1};
           amp.current = adc_read(); // TODO:Calculate RMS value
           amp.timestamp = measurement_count;
-          amp_array[measurement_count] = amp; // Storing amp in array
+          
+          //TODO: Storing amp in array
         }
 
         sleep_cpu(); //I SLEEP
