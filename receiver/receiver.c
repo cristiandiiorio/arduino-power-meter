@@ -252,10 +252,48 @@ int main(int argc, const char** argv) {
   else if (mode == 'q') { 
     UART_send_special_message(fd, mode);
     //TODO: receive all time storage locations and let the user choose which one to query
-    for(int i=0;i<60;i++){
-      amp_value amp = UART_read_amp(fd);
-      print_amp(amp,1);
-    }    
+    
+    // Receive all time storage locations
+    amp_value amp;
+    
+    // Receive and print last_minute_array
+    printf("Last Minute Array:\n");
+    for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
+      amp = UART_read_amp(fd);
+      print_amp(amp, 0);
+    }
+    printf("\n--------------------\n");
+
+    // Receive and print last_hour_array
+    printf("Last Hour Array:\n");
+    for (int i = 0; i < MINUTES_IN_HOUR; i++) {
+      amp = UART_read_amp(fd);
+      print_amp(amp, 0);
+    }
+    printf("\n--------------------\n");
+
+    // Receive and print last_day_array
+    printf("Last Day Array:\n");
+    for (int i = 0; i < HOURS_IN_DAY; i++) {
+      amp = UART_read_amp(fd);
+      print_amp(amp, 0);
+    }
+    printf("\n--------------------\n");
+
+    // Receive and print last_month_array
+    printf("Last Month Array:\n");
+    for (int i = 0; i < DAYS_IN_MONTH; i++) {
+      amp = UART_read_amp(fd);
+      print_amp(amp, 0);
+    }
+    printf("\n--------------------\n");
+    // Receive and print last_year_array
+    printf("Last Year Array:\n");
+    for (int i = 0; i < MONTHS_IN_YEAR; i++) {
+      amp = UART_read_amp(fd);
+      print_amp(amp, 0);
+    }
+    printf("\n--------------------\n");
   }
 
   // clearing mode

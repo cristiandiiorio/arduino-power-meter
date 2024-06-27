@@ -1,11 +1,5 @@
 #include "meter.h"
 
-#define SECONDS_IN_MINUTE 60
-#define MINUTES_IN_HOUR 60
-#define HOURS_IN_DAY 24
-#define DAYS_IN_MONTH 30
-#define MONTHS_IN_YEAR 12
-
 //UART Global Variables
 volatile uint8_t mode;
 volatile uint8_t uart_flag = 0;
@@ -21,6 +15,20 @@ amp_value last_hour_array[MINUTES_IN_HOUR]; // contains amp_values for the last 
 amp_value last_day_array[HOURS_IN_DAY]; // contains amp_values for the last day
 amp_value last_month_array[DAYS_IN_MONTH]; // contains amp_values for the last month
 amp_value last_year_array[MONTHS_IN_YEAR]; // contains amp_values for the last year
+
+// Running sums and counts for aggregation
+float minute_sum = 0;
+uint8_t minute_count = 0;
+
+float hour_sum = 0;
+uint8_t hour_count = 0;
+
+float day_sum = 0;
+uint8_t day_count = 0;
+
+float month_sum = 0;
+uint8_t month_count = 0;
+
 
 //Function to send amp_values over UART
 void UART_send_amp_binary(amp_value *amp) {
@@ -72,7 +80,68 @@ float calculate_rms(float *buffer, uint16_t size) {
 
 //Function to update the time storage locations
 void update_time_arrays(amp_value amp) {
-  //time logic
+  // Update last_minute_array
+  last_minute_array[measurement_count % SECONDS_IN_MINUTE] = amp;
+  minute_sum += amp.current;
+  minute_count++;
+
+  if (minute_count == SECONDS_IN_MINUTE) {
+    // Calculate average for the last minute
+    float minute_avg = minute_sum / SECONDS_IN_MINUTE;
+
+    // Update last_hour_array
+    amp_value hour_amp = {minute_avg, measurement_count / SECONDS_IN_MINUTE};
+    last_hour_array[(measurement_count / SECONDS_IN_MINUTE) % MINUTES_IN_HOUR] = hour_amp;
+    hour_sum += minute_avg;
+    hour_count++;
+
+    // Reset minute_sum and minute_count
+    minute_sum = 0;
+    minute_count = 0;
+  }
+
+  if (hour_count == MINUTES_IN_HOUR) {
+    // Calculate average for the last hour
+    float hour_avg = hour_sum / MINUTES_IN_HOUR;
+
+    // Update last_day_array
+    amp_value day_amp = {hour_avg, measurement_count / ((uint64_t)SECONDS_IN_MINUTE * MINUTES_IN_HOUR)};
+    last_day_array[(measurement_count / ((uint64_t)SECONDS_IN_MINUTE * MINUTES_IN_HOUR)) % HOURS_IN_DAY] = day_amp;
+    day_sum += hour_avg;
+    day_count++;
+
+    // Reset hour_sum and hour_count
+    hour_sum = 0;
+    hour_count = 0;
+  }
+
+  if (day_count == HOURS_IN_DAY) {
+    // Calculate average for the last day
+    float day_avg = day_sum / HOURS_IN_DAY;
+
+    // Update last_month_array
+    amp_value month_amp = {day_avg, measurement_count / ((uint64_t)SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY)};
+    last_month_array[(measurement_count / ((uint64_t)SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY)) % DAYS_IN_MONTH] = month_amp;
+    month_sum += day_avg;
+    month_count++;
+
+    // Reset day_sum and day_count
+    day_sum = 0;
+    day_count = 0;
+  }
+
+  if (month_count == DAYS_IN_MONTH) {
+    // Calculate average for the last month
+    float month_avg = month_sum / DAYS_IN_MONTH;
+
+    // Update last_year_array
+    amp_value year_amp = {month_avg, measurement_count / ((uint64_t)SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY * DAYS_IN_MONTH)};
+    last_year_array[(measurement_count / ((uint64_t)SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY * DAYS_IN_MONTH)) % MONTHS_IN_YEAR] = year_amp;
+
+    // Reset month_sum and month_count
+    month_sum = 0;
+    month_count = 0;
+  }
 }
 
 
@@ -113,8 +182,29 @@ int main(void) {
 
       if(mode == 'q'){
         //TODO: send all time storage locations over UART
-        for(int i = 0; i < MINUTES_IN_HOUR; i++){
+        // Send last_minute_array
+        for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
           UART_send_amp_binary(&last_minute_array[i]);
+        }
+
+        // Send last_hour_array
+        for (int i = 0; i < MINUTES_IN_HOUR; i++) {
+          UART_send_amp_binary(&last_hour_array[i]);
+        }
+
+        // Send last_day_array
+        for (int i = 0; i < HOURS_IN_DAY; i++) {
+          UART_send_amp_binary(&last_day_array[i]);
+        }
+
+        // Send last_month_array
+        for (int i = 0; i < DAYS_IN_MONTH; i++) {
+          UART_send_amp_binary(&last_month_array[i]);
+        }
+
+        // Send last_year_array
+        for (int i = 0; i < MONTHS_IN_YEAR; i++) {
+          UART_send_amp_binary(&last_year_array[i]);
         }
       }
       else if(mode == 'c'){

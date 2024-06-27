@@ -1,4 +1,5 @@
 #include "my_uart.h"
+#include <math.h>
 
 void UART_init(void) {
   // Set baud rate
