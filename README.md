@@ -2,6 +2,10 @@
 ```
 ./receiver /dev/ttyUSB0
 ```
+Poi digitando:
+- _o_ (online mode), che permette di vedere in live il feed del sensore ogni x secondi a scelta dell'utente
+- _q_ (query mode), mostra i valori richiesti dalla traccia
+- _c_ (clearing mode), pulisce gli array dove vengono salvate le misurazioni
 
 ## Collegamento sensore-arduino:
 1. GND->GND (marrone)
@@ -23,6 +27,7 @@ Con la vite in basso a destra, girando:
 - verso destra aumenta la resistenza
 - verso sinistra diminuisce
 (1 giro sono circa 2 ohm)
+Dopo il ricevimento la resistenza del potenziometro era 70kOhm.
 
 ## Breadboard
 Collegare i due GND in una strip e collegare quella strip a GND dell'arduino.
