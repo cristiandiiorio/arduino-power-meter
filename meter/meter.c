@@ -100,6 +100,8 @@ int main(void) {
   
   enable_interrupts();
 
+  DDRB |= (1 << PB7);  //set LED_PIN as an output
+
   while (1) {
     //USER MODE
     if(uart_flag){
@@ -173,6 +175,8 @@ int main(void) {
 
           //TODO: Storing amp in the right array
           update_time_arrays(amp);
+          PORTB ^= (1 << PB7);  //toggle the LED_PIN
+
         }
 
         sleep_cpu(); //I SLEEP
