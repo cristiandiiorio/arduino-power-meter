@@ -3,9 +3,9 @@
 ./receiver /dev/ttyUSB0
 ```
 Poi digitando:
-- _o_ (online mode), che permette di vedere in live il feed del sensore ogni x secondi a scelta dell'utente
-- _q_ (query mode), mostra i valori richiesti dalla traccia
-- _c_ (clearing mode), pulisce gli array dove vengono salvate le misurazioni
+- _o_ (online mode), si può vedere in live il feed del sensore ogni x secondi a scelta dell'utente
+- _q_ (query mode), vengono mostrati i valori richiesti dalla traccia
+- _c_ (clearing mode), sono puliti gli array dove vengono salvate le misurazioni
 
 ## Collegamento sensore-arduino:
 1. GND->GND (marrone)
