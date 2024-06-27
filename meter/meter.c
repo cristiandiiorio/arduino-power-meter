@@ -72,7 +72,7 @@ float calculate_rms(float *buffer, uint16_t size) {
 
 //Function to update the time storage locations
 void update_time_arrays(amp_value amp) {
-  last_minute_array[measurement_count % SECONDS_IN_MINUTE] = amp;
+  //time logic
 }
 
 
@@ -122,8 +122,9 @@ int main(void) {
         memset(last_day_array, 0, sizeof(last_day_array));
         memset(last_month_array, 0, sizeof(last_month_array));
         memset(last_year_array, 0, sizeof(last_year_array));
+        
         amp_value amp = {-1, 0}; // -1 indicates memory cleared
-        UART_send_amp_binary(&amp);
+        UART_send_amp_binary(&amp); //send confirmation message
       }
       else{ //mode == 'o'
         TCCR5A = 0; 
@@ -166,7 +167,7 @@ int main(void) {
         if(timer_flag){
           timer_flag = 0; //reset flag
 
-          amp_value amp = {1, 1};
+          amp_value amp = {0, 0};
           amp.current = adc_read(); // TODO:Calculate RMS value
           amp.timestamp = measurement_count;
 

@@ -252,16 +252,10 @@ int main(int argc, const char** argv) {
   else if (mode == 'q') { 
     UART_send_special_message(fd, mode);
     //TODO: receive all time storage locations and let the user choose which one to query
-    amp_value minutes[60];
     for(int i=0;i<60;i++){
-      minutes[i] = UART_read_amp(fd);
-    }
-    printf("Last minute:  ");
-    for(int i=0;i<60;i++){
-      print_amp(minutes[i],0);
-    }
-    printf("\n");
-    
+      amp_value amp = UART_read_amp(fd);
+      print_amp(amp,1);
+    }    
   }
 
   // clearing mode
