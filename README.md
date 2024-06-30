@@ -30,5 +30,9 @@ Con la vite in basso a destra, girando:
 (1 giro sono circa 2 ohm)\
 Dopo il ricevimento la resistenza del potenziometro era 70kOhm.
 
-## Breadboard
-Collegare i due GND in una strip e collegare quella strip a GND dell'arduino.
+## Sensibilità Reale
+Sembra che per carichi che consumano meno di 0.1 A il sensore non sia molto preciso.
+Usando carichi resistivi (ventilatori e lampade) e una pinza amperometrica, ho preso alcune misure (taratura_sensore.csv).
+Fornendo poi queste misure a ml.py, ho trovato le costanti di calibrazione:
+0.5585782067493418 -0.023709353719794463
+Ossia: 0.586 -0.0237

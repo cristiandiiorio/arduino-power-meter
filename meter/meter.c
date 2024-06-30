@@ -1,4 +1,6 @@
 #include "meter.h"
+#define CALIBRATION1 0.586
+#define CALIBRATION2 0.0237
 
 //UART Global Variables
 volatile uint8_t mode;
@@ -8,6 +10,7 @@ volatile uint8_t uart_flag = 0;
 volatile uint8_t online_flag = 0;
 volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
+volatile uint8_t sensor_flag = 0;
 
 //time storage locations
 amp_value last_minute_array[SECONDS_IN_MINUTE]; // contains amp_values for the last minute
@@ -134,9 +137,18 @@ void update_time_arrays(amp_value amp) {
   }
 }
 
+float calculate_current(float min_val, float max_val){
+  float sample = ((max_val - min_val)*5)/1024; //5,1024 are the Vref and the ADC resolution
+  sample = sample * 0.707; //calculate RMS value (0.707 = sqrt(2)/2)
+  float calibrated_sample = sample * CALIBRATION1 + CALIBRATION2; //calibration
+  if (calibrated_sample < 0.03) {
+    calibrated_sample = 0;
+  }
+  return calibrated_sample;
+}
 
 ISR(TIMER1_COMPA_vect) {
-
+  sensor_flag = 1;
 }
 
 ISR(TIMER3_COMPA_vect) {
@@ -232,14 +244,31 @@ int main(void) {
         TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
         enable_interrupts();
 
+        float max_val = 0;
+        float min_val = 0;
+        float new_val = 0;
         while(1){
-          if(online_flag){
+          if(sensor_flag){ //measuring every 1000hz
+            new_val = adc_read();
+            if (new_val > max_val) { //get max value
+              max_val = new_val;
+            }
+            if (new_val < min_val || min_val == 0) { //get min value
+              min_val = new_val;
+            }
+            sensor_flag = 0; //reset flag
+          }
+          if(online_flag){ //1000hz interval ended, we send the data calculated
+            float current = calculate_current(min_val, max_val);
+            
             amp_value amp = {0, 0};
-            amp.current = adc_read(); // TODO:Calculate RMS value
+            amp.current = current;
             amp.timestamp = measurement_count  * time;
             
             UART_send_amp_binary(&amp);
 
+            max_val = 0; //reset max value
+            min_val = 0; //reset min value
             online_flag = 0; //reset flag
           }
 
