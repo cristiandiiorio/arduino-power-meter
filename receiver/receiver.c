@@ -81,10 +81,10 @@ int serial_open(const char* name) {
 
 void print_amp(amp_value amp, int selector) {
   if(selector){
-    printf("At time %ds current is %.3fA\n", amp.timestamp, amp.current);
+    printf("At time %ds current is %.2fmA\n", amp.timestamp, amp.current*1000);
   }
   else{
-    printf(" |%.3fA| ", amp.current);
+    printf(" |%.2fmA| ", amp.current*1000);
   }
 }
 
