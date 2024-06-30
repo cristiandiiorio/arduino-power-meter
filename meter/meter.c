@@ -68,8 +68,6 @@ float adc_read(void) {
   return ADC; 
 }
 
-
-
 //Function to update the time storage locations
 void update_time_arrays(amp_value amp) {
   // Update last_minute_array
@@ -137,6 +135,10 @@ void update_time_arrays(amp_value amp) {
 }
 
 
+ISR(TIMER1_COMPA_vect) {
+
+}
+
 ISR(TIMER3_COMPA_vect) {
   timer_flag = 1; //set the flag to indicate timer overflow
   measurement_count++;
@@ -159,6 +161,14 @@ int main(void) {
   UART_init();
   adc_init();
   
+  //TIMER 1 INIT (1000 hz)
+  TCCR1A = 0;
+  TCCR1B = (1 << WGM12) | (1 << CS11) | (1 << CS10); // set up timer with prescaler = 1024
+  uint16_t ocrval = (uint16_t)(15.625); //1000 hz (come da ricevimento)
+  OCR1A = ocrval;
+  
+  TIMSK1 |= (1 << OCIE1A); // enable timer interrupt
+  
   enable_interrupts();
 
   DDRB |= (1 << PB7);  //set LED_PIN as an output
@@ -168,7 +178,7 @@ int main(void) {
     if(uart_flag){
       uart_flag = 0; //reset flag
 
-      //disable && stop timer3 interrupt
+      //STOP timer3 interrupt
       TIMSK3 &= ~(1 << OCIE3A);
       TCCR3B &= ~((1 << CS32) | (1 << CS31) | (1 << CS30));
 
@@ -211,6 +221,7 @@ int main(void) {
         UART_send_amp_binary(&amp); //send confirmation message
       }
       else{ //mode == 'o'
+        //TIMER 5 INIT (time)
         TCCR5A = 0; 
         TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
         const uint8_t time = mode;
@@ -238,6 +249,7 @@ int main(void) {
     }
     //DETACHED MODE
     else{
+      //TIMER 3 INIT (1 second)
       TCCR3A = 0;
       TCCR3B = (1 << WGM32) | (1 << CS30) | (1 << CS32); // set up timer with prescaler = 1024
       uint16_t ocrval = (uint16_t)(15.625 * 1000); //1 second
