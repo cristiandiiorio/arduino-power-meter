@@ -289,17 +289,31 @@ int main(void) {
       enable_interrupts();
 
       while(uart_flag == 0){ //serial not connected 
-        if(timer_flag){
-          timer_flag = 0; //reset flag
+        float max_val = 0;
+        float min_val = 0;
+        float new_val = 0;
 
+        if(sensor_flag){ //measuring every 1000hz
+          new_val = adc_read();
+          if (new_val > max_val) { //get max value
+            max_val = new_val;
+          }
+          if (new_val < min_val || min_val == 0) { //get min value
+            min_val = new_val;
+          }
+          sensor_flag = 0; //reset flag
+        }
+        if(timer_flag){
+          float current = calculate_current(min_val, max_val);
+          
           amp_value amp = {0, 0};
-          amp.current = adc_read(); // TODO:Calculate RMS value
+          amp.current = current; // TODO:Calculate RMS value
           amp.timestamp = measurement_count;
 
           //TODO: Storing amp in the right array
           update_time_arrays(amp);
           PORTB ^= (1 << PB7);  //toggle the LED_PIN
-
+          timer_flag = 0; //reset flag
         }
 
         sleep_cpu(); //I SLEEP
