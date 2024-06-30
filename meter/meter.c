@@ -68,15 +68,7 @@ float adc_read(void) {
   return ADC; 
 }
 
-float calculate_rms(float *buffer, uint16_t size) {
-  float sum_of_squares = 0;
-  for (uint16_t i = 0; i < size; i++) {
-    sum_of_squares += buffer[i] * buffer[i];
-  }
-  float mean_of_squares = sum_of_squares / size;
-  float rms = sqrt(mean_of_squares);
-  return rms;
-}
+
 
 //Function to update the time storage locations
 void update_time_arrays(amp_value amp) {
