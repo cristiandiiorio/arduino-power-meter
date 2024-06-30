@@ -1,6 +1,4 @@
 #include "meter.h"
-#define CALIBRATION1 0.586
-#define CALIBRATION2 0.0237
 
 //UART Global Variables
 volatile uint8_t mode;
@@ -137,6 +135,7 @@ void update_time_arrays(amp_value amp) {
   }
 }
 
+//Function to calculate the calibrated rms current
 float calculate_current(float min_val, float max_val){
   float sample = ((max_val - min_val)*5)/1024; //5,1024 are the Vref and the ADC resolution
   sample = sample * 0.707; //calculate RMS value (0.707 = sqrt(2)/2)
@@ -145,6 +144,39 @@ float calculate_current(float min_val, float max_val){
     calibrated_sample = 0;
   }
   return calibrated_sample;
+}
+
+void sampling_timer_init(void){
+  TCCR1A = 0;
+  TCCR1B = (1 << WGM12) | (1 << CS11) | (1 << CS10); // set up timer with prescaler = 1024
+  uint16_t ocrval = (uint16_t)(15.625); //1000 hz (come da ricevimento)
+  OCR1A = ocrval;
+  
+  TIMSK1 |= (1 << OCIE1A); // enable timer interrupt
+}
+
+void online_mode_timer_init(uint8_t mode){
+  TCCR5A = 0; 
+  TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
+  const uint8_t time = mode;
+  uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
+  OCR5A = ocrval;
+
+  disable_interrupts();
+  TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
+  enable_interrupts();
+}
+
+void detached_mode_timer_init(void){
+  TCCR3A = 0;
+  TCCR3B = (1 << WGM32) | (1 << CS30) | (1 << CS32); // set up timer with prescaler = 1024
+  uint16_t ocrval = (uint16_t)(15.625 * 1000); //1 second
+  OCR3A = ocrval;
+
+  disable_interrupts();
+  TIMSK3 |= (1 << OCIE3A); // enable timer interrupt
+  enable_interrupts();
+
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -172,14 +204,7 @@ ISR(USART0_RX_vect) {
 int main(void) {
   UART_init();
   adc_init();
-  
-  //TIMER 1 INIT (1000 hz)
-  TCCR1A = 0;
-  TCCR1B = (1 << WGM12) | (1 << CS11) | (1 << CS10); // set up timer with prescaler = 1024
-  uint16_t ocrval = (uint16_t)(15.625); //1000 hz (come da ricevimento)
-  OCR1A = ocrval;
-  
-  TIMSK1 |= (1 << OCIE1A); // enable timer interrupt
+  sampling_timer_init();
   
   enable_interrupts();
 
@@ -233,16 +258,7 @@ int main(void) {
         UART_send_amp_binary(&amp); //send confirmation message
       }
       else{ //mode == 'o'
-        //TIMER 5 INIT (time)
-        TCCR5A = 0; 
-        TCCR5B = (1 << WGM52) | (1 << CS50) | (1 << CS52) ; // set up timer with prescaler = 1024
-        const uint8_t time = mode;
-        uint16_t ocrval = (uint16_t)(15.625 * 1000 * time);
-        OCR5A = ocrval;
-
-        disable_interrupts();
-        TIMSK5 |= (1 << OCIE5A); // enable timer interrupt
-        enable_interrupts();
+        online_mode_timer_init(mode);
 
         float max_val = 0;
         float min_val = 0;
@@ -263,7 +279,7 @@ int main(void) {
             
             amp_value amp = {0, 0};
             amp.current = current;
-            amp.timestamp = measurement_count  * time;
+            amp.timestamp = measurement_count * mode;
             
             UART_send_amp_binary(&amp);
 
@@ -278,16 +294,7 @@ int main(void) {
     }
     //DETACHED MODE
     else{
-      //TIMER 3 INIT (1 second)
-      TCCR3A = 0;
-      TCCR3B = (1 << WGM32) | (1 << CS30) | (1 << CS32); // set up timer with prescaler = 1024
-      uint16_t ocrval = (uint16_t)(15.625 * 1000); //1 second
-      OCR3A = ocrval;
-
-      disable_interrupts();
-      TIMSK3 |= (1 << OCIE3A); // enable timer interrupt
-      enable_interrupts();
-
+      detached_mode_timer_init();
       while(uart_flag == 0){ //serial not connected 
         float max_val = 0;
         float min_val = 0;
@@ -307,7 +314,7 @@ int main(void) {
           float current = calculate_current(min_val, max_val);
           
           amp_value amp = {0, 0};
-          amp.current = current; // TODO:Calculate RMS value
+          amp.current = current;
           amp.timestamp = measurement_count;
 
           //TODO: Storing amp in the right array

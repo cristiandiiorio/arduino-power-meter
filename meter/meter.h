@@ -8,13 +8,17 @@
 
 #define ARRAY_SIZE 2000
 
+#define CALIBRATION1 0.586
+#define CALIBRATION2 0.0237
+
 void UART_send_amp_binary(amp_value *amp);
 
 void adc_init(void);
 
 float adc_read(void);
 
-float calculate_rms(float *buffer, uint16_t size);
+void update_time_arrays(amp_value amp);
 
+float calculate_current(float min_val, float max_val);
 
 
