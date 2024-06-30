@@ -34,5 +34,5 @@ Dopo il ricevimento la resistenza del potenziometro era 70kOhm.
 Sembra che per carichi che consumano meno di 0.1 A il sensore non sia molto preciso.
 Usando carichi resistivi (ventilatori e lampade) e una pinza amperometrica, ho preso alcune misure (taratura_sensore.csv).
 Fornendo poi queste misure a ml.py, ho trovato le costanti di calibrazione:
-0.5585782067493418 -0.023709353719794463
-Ossia: 0.586 -0.0237
+0.5585782067493418 -0.023709353719794463 Ossia: 0.586 -0.0237
+Alla fine dei conti, la sensibilità più o meno è di 60mA.
