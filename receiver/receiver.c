@@ -1,7 +1,7 @@
 #include "receiver.h"
 
 #define blocking_status 1
-
+#define BAUDRATE 19200
 int fd;
 
 int serial_set_interface_attribs(int fd, int speed, int parity) {
@@ -81,10 +81,15 @@ int serial_open(const char* name) {
 
 void print_amp(amp_value amp, int selector) {
   if(selector){
-    printf("At time %ds current is %.2fmA\n", amp.timestamp, amp.current*1000);
+    if(amp.current > 1){
+      printf("At time %ds current is %.2fA\n", amp.timestamp, amp.current);
+    }
+    else{
+      printf("At time %ds current is %.0fmA\n", amp.timestamp, amp.current*1000);
+    }
   }
   else{
-    printf(" |%.2fmA| ", amp.current*1000);
+    printf(" |%.0fmA| ", amp.current*1000);
   }
 }
 
@@ -218,12 +223,11 @@ int main(int argc, const char** argv) {
     printf("receiver <serial_file>\n");
     return -1;
   }
-  const char* serial_device=argv[1];
-  const int baudrate = 19200;
+  const char* serial_device = argv[1];
   
   //serial setup
   fd = serial_open(serial_device);
-  serial_set_interface_attribs(fd, baudrate, 0);
+  serial_set_interface_attribs(fd, BAUDRATE, 0);
   serial_set_blocking(fd, blocking_status);
 
   //read from stdin
