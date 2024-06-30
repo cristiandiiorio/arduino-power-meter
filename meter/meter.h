@@ -20,5 +20,3 @@ float adc_read(void);
 void update_time_arrays(amp_value amp);
 
 float calculate_current(float min_val, float max_val);
-
-
