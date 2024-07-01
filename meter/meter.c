@@ -10,26 +10,19 @@ volatile uint8_t timer_flag = 0;
 volatile uint16_t measurement_count = 0;
 volatile uint8_t sensor_flag = 0;
 
-//time storage locations
-amp_value last_minute_array[SECONDS_IN_MINUTE]; // contains amp_values for the last minute
-amp_value last_hour_array[MINUTES_IN_HOUR]; // contains amp_values for the last hour
-amp_value last_day_array[HOURS_IN_DAY]; // contains amp_values for the last day
-amp_value last_month_array[DAYS_IN_MONTH]; // contains amp_values for the last month
-amp_value last_year_array[MONTHS_IN_YEAR]; // contains amp_values for the last year
-
 // Running sums and counts for aggregation
-float minute_sum = 0;
-uint8_t minute_count = 0;
+volatile float minute_sum = 0;
+volatile uint8_t minute_count = 0;
 
-float hour_sum = 0;
-uint8_t hour_count = 0;
+volatile float hour_sum = 0;
+volatile uint8_t hour_count = 0;
 
-float day_sum = 0;
-uint8_t day_count = 0;
+volatile float day_sum = 0;
+volatile uint8_t day_count = 0;
 
-float month_sum = 0;
-uint8_t month_count = 0;
-
+volatile float month_sum = 0;
+volatile uint8_t month_count = 0;
+/*
 //Function to update the time storage locations
 void update_time_arrays(amp_value amp) {
   // Update last_minute_array
@@ -95,7 +88,7 @@ void update_time_arrays(amp_value amp) {
     month_count = 0;
   }
 }
-
+*/
 
 void sampling_timer_init(void){
   TCCR1A = 0;
@@ -161,6 +154,14 @@ int main(void) {
 
   DDRB |= (1 << PB7);  //set LED_PIN as an output
 
+  //time storage locations
+  amp_value last_minute_array[SECONDS_IN_MINUTE]; // contains amp_values for the last minute
+  amp_value last_hour_array[MINUTES_IN_HOUR]; // contains amp_values for the last hour
+  amp_value last_day_array[HOURS_IN_DAY]; // contains amp_values for the last day
+  amp_value last_month_array[DAYS_IN_MONTH]; // contains amp_values for the last month
+  amp_value last_year_array[MONTHS_IN_YEAR]; // contains amp_values for the last year
+
+
   while (1) {
     //USER MODE
     if(uart_flag){
@@ -175,27 +176,33 @@ int main(void) {
         // Send last_minute_array
         for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
           UART_send_amp_binary(&last_minute_array[i]);
+          _delay_ms(5);
         }
 
         // Send last_hour_array
         for (int i = 0; i < MINUTES_IN_HOUR; i++) {
           UART_send_amp_binary(&last_hour_array[i]);
+          _delay_ms(5);
         }
 
         // Send last_day_array
         for (int i = 0; i < HOURS_IN_DAY; i++) {
           UART_send_amp_binary(&last_day_array[i]);
+          _delay_ms(5);
         }
 
         // Send last_month_array
         for (int i = 0; i < DAYS_IN_MONTH; i++) {
           UART_send_amp_binary(&last_month_array[i]);
+          _delay_ms(5);
         }
 
         // Send last_year_array
         for (int i = 0; i < MONTHS_IN_YEAR; i++) {
           UART_send_amp_binary(&last_year_array[i]);
+          _delay_ms(5);
         }
+
       }
       else if(mode == 'c'){
         //clears all time storage locations and send confirmation over UART
@@ -246,11 +253,11 @@ int main(void) {
     //DETACHED MODE
     else{
       detached_mode_timer_init();
+      
+      float max_val = 0;
+      float min_val = 0;
+      float new_val = 0;
       while(uart_flag == 0){ //serial not connected 
-        float max_val = 0;
-        float min_val = 0;
-        float new_val = 0;
-
         if(sensor_flag){ //measuring every 1000hz
           new_val = adc_read();
           if (new_val > max_val) { //get max value
@@ -269,9 +276,15 @@ int main(void) {
           amp.timestamp = measurement_count;
 
           //TODO: Storing amp in the right array
-          update_time_arrays(amp);
-          PORTB ^= (1 << PB7);  //toggle the LED_PIN
+          //update_time_arrays(amp);
+          last_minute_array[measurement_count % SECONDS_IN_MINUTE] = amp;
+
+          max_val = 0; //reset max value
+          min_val = 0; //reset min value
           timer_flag = 0; //reset flag
+
+          PORTB ^= (1 << PB7);  //toggle the LED_PIN (helps for debugging) 
+
         }
 
         sleep_cpu(); //I SLEEP

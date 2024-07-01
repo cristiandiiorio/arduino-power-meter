@@ -85,7 +85,7 @@ void print_amp(amp_value amp, int selector) {
     }
   }
   else{
-    printf(" |%.0fmA| ", amp.current*1000);
+    printf("|%.0fmA| ", amp.current*1000);
   }
 }
 
