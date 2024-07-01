@@ -15,8 +15,8 @@ void UART_send_amp_binary(amp_value *amp);
 
 void adc_init(void);
 
-float adc_read(void);
+uint16_t adc_read(void);
 
 void update_time_arrays(amp_value amp, amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months);
 
-float calculate_current(float min_val, float max_val);
+uint16_t calculate_current(uint16_t min_val, uint16_t max_val);

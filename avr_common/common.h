@@ -4,7 +4,7 @@
 #include <string.h>
 
 typedef struct __attribute__((packed)) amp_value {
-  float current; 
+  uint16_t current; 
   uint16_t timestamp;
 } amp_value;
 
