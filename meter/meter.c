@@ -22,9 +22,9 @@ volatile uint8_t day_count = 0;
 
 volatile float month_sum = 0;
 volatile uint8_t month_count = 0;
-/*
+
 //Function to update the time storage locations
-void update_time_arrays(amp_value amp) {
+void update_time_arrays(amp_value amp, amp_value* last_minute_array, amp_value* last_hour_array, amp_value* last_day_array, amp_value* last_month_array, amp_value* last_year_array) {
   // Update last_minute_array
   last_minute_array[measurement_count % SECONDS_IN_MINUTE] = amp;
   minute_sum += amp.current;
@@ -88,7 +88,7 @@ void update_time_arrays(amp_value amp) {
     month_count = 0;
   }
 }
-*/
+
 
 void sampling_timer_init(void){
   TCCR1A = 0;
@@ -275,9 +275,7 @@ int main(void) {
           amp.current = current;
           amp.timestamp = measurement_count;
 
-          //TODO: Storing amp in the right array
-          //update_time_arrays(amp);
-          last_minute_array[measurement_count % SECONDS_IN_MINUTE] = amp;
+          update_time_arrays(amp, last_minute_array, last_hour_array, last_day_array, last_month_array, last_year_array);
 
           max_val = 0; //reset max value
           min_val = 0; //reset min value
