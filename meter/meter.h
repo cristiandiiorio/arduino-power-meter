@@ -17,6 +17,6 @@ void adc_init(void);
 
 float adc_read(void);
 
-void update_time_arrays(amp_value amp, amp_value* last_minute_array, amp_value* last_hour_array, amp_value* last_day_array, amp_value* last_month_array, amp_value* last_year_array);
+void update_time_arrays(amp_value amp, amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months);
 
 float calculate_current(float min_val, float max_val);

@@ -23,9 +23,9 @@ volatile uint16_t month_sum = 0;
 volatile uint16_t year_sum = 0;
 
 //Function to update the time storage locations
-void update_time_arrays(amp_value amp, amp_value* last_minute_array, amp_value* last_hour_array, amp_value* last_day_array, amp_value* last_month_array, amp_value* last_year_array) {
-  // Update last_minute_array
-  last_minute_array[minute_index] = amp;
+void update_time_arrays(amp_value amp, amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months) {
+  // Update last_seconds
+  last_seconds[minute_index] = amp;
   minute_sum += amp.current;
   minute_index++;
 
@@ -33,9 +33,9 @@ void update_time_arrays(amp_value amp, amp_value* last_minute_array, amp_value* 
     // Calculate average for the last minute
     uint16_t minute_avg = minute_sum / SECONDS_IN_MINUTE;
 
-    // Update last_hour_array
+    // Update last_minutes
     amp_value hour_amp = {minute_avg, measurement_count};
-    last_hour_array[hour_index] = hour_amp;
+    last_minutes[hour_index] = hour_amp;
     hour_sum += minute_avg;
     hour_index++;
 
@@ -48,9 +48,9 @@ void update_time_arrays(amp_value amp, amp_value* last_minute_array, amp_value* 
     // Calculate average for the last hour
     uint16_t hour_avg = hour_sum / MINUTES_IN_HOUR;
 
-    // Update last_day_array
+    // Update last_hours
     amp_value day_amp = {hour_avg, measurement_count};
-    last_day_array[day_index] = day_amp;
+    last_hours[day_index] = day_amp;
     day_sum += hour_avg;
     day_index++;
 
@@ -63,9 +63,9 @@ void update_time_arrays(amp_value amp, amp_value* last_minute_array, amp_value* 
     // Calculate average for the last day
     float day_avg = day_sum / HOURS_IN_DAY;
 
-    // Update last_month_array
+    // Update last_days
     amp_value month_amp = {day_avg, measurement_count};
-    last_month_array[month_index] = month_amp;
+    last_days[month_index] = month_amp;
     month_sum += day_avg;
     month_index++;
 
@@ -78,9 +78,9 @@ void update_time_arrays(amp_value amp, amp_value* last_minute_array, amp_value* 
     // Calculate average for the last month
     float month_avg = month_sum / DAYS_IN_MONTH;
 
-    // Update last_year_array
+    // Update last_months
     amp_value year_amp = {month_avg, measurement_count};
-    last_year_array[year_index] = year_amp;
+    last_months[year_index] = year_amp;
 
     // Reset month_sum and month_index
     month_sum = 0;
@@ -154,11 +154,11 @@ int main(void) {
   DDRB |= (1 << PB7);  //set LED_PIN as an output
 
   //time storage locations
-  amp_value last_minute_array[SECONDS_IN_MINUTE]; // contains amp_values for the last minute (not requested)
-  amp_value last_hour_array[MINUTES_IN_HOUR]; // contains amp_values for the last hour
-  amp_value last_day_array[HOURS_IN_DAY]; // contains amp_values for the last day
-  amp_value last_month_array[DAYS_IN_MONTH]; // contains amp_values for the last month
-  amp_value last_year_array[MONTHS_IN_YEAR]; // contains amp_values for the last year
+  amp_value last_seconds[SECONDS_IN_MINUTE]; // contains amp_values for the last 60 seconds (not requested)
+  amp_value last_minutes[MINUTES_IN_HOUR]; // contains amp_values for the last 60 minutes
+  amp_value last_hours[HOURS_IN_DAY]; // contains amp_values for the last 24 hours
+  amp_value last_days[DAYS_IN_MONTH]; // contains amp_values for the last 30 days
+  amp_value last_months[MONTHS_IN_YEAR]; // contains amp_values for the last 12 months
 
   while (1) {
     //USER MODE
@@ -171,44 +171,44 @@ int main(void) {
 
       if(mode == 'q'){
         //TODO: send all time storage locations over UART
-        // Send last_minute_array
+        // Send last_seconds
         for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
-          UART_send_amp_binary(&last_minute_array[i]);
+          UART_send_amp_binary(&last_seconds[i]);
           _delay_ms(5);
         }
 
-        // Send last_hour_array
+        // Send last_minutes
         for (int i = 0; i < MINUTES_IN_HOUR; i++) {
-          UART_send_amp_binary(&last_hour_array[i]);
+          UART_send_amp_binary(&last_minutes[i]);
           _delay_ms(5);
         }
 
-        // Send last_day_array
+        // Send last_hours
         for (int i = 0; i < HOURS_IN_DAY; i++) {
-          UART_send_amp_binary(&last_day_array[i]);
+          UART_send_amp_binary(&last_hours[i]);
           _delay_ms(5);
         }
 
-        // Send last_month_array
+        // Send last_days
         for (int i = 0; i < DAYS_IN_MONTH; i++) {
-          UART_send_amp_binary(&last_month_array[i]);
+          UART_send_amp_binary(&last_days[i]);
           _delay_ms(5);
         }
 
-        // Send last_year_array
+        // Send last_months
         for (int i = 0; i < MONTHS_IN_YEAR; i++) {
-          UART_send_amp_binary(&last_year_array[i]);
+          UART_send_amp_binary(&last_months[i]);
           _delay_ms(5);
         }
 
       }
       else if(mode == 'c'){
         //clears all time storage locations and send confirmation over UART
-        memset(last_minute_array, 0, sizeof(last_minute_array));
-        memset(last_hour_array, 0, sizeof(last_hour_array));
-        memset(last_day_array, 0, sizeof(last_day_array));
-        memset(last_month_array, 0, sizeof(last_month_array));
-        memset(last_year_array, 0, sizeof(last_year_array));
+        memset(last_seconds, 0, sizeof(last_seconds));
+        memset(last_minutes, 0, sizeof(last_minutes));
+        memset(last_hours, 0, sizeof(last_hours));
+        memset(last_days, 0, sizeof(last_days));
+        memset(last_months, 0, sizeof(last_months));
         
         amp_value amp = {-1, 0}; // -1 indicates memory cleared
         UART_send_amp_binary(&amp); //send confirmation message
@@ -273,7 +273,7 @@ int main(void) {
           amp.current = current;
           amp.timestamp = measurement_count;
 
-          update_time_arrays(amp, last_minute_array, last_hour_array, last_day_array, last_month_array, last_year_array);
+          update_time_arrays(amp, last_seconds, last_minutes, last_hours, last_days, last_months);
 
           max_val = 0; //reset max value
           min_val = 0; //reset min value
