@@ -10,81 +10,83 @@ volatile uint16_t measurement_count = 0;
 volatile uint8_t sensor_flag = 0;
 
 //time arrays counters
-volatile uint8_t minute_index = 0;
-volatile uint8_t hour_index = 0;
-volatile uint8_t day_index = 0;
-volatile uint8_t month_index = 0;
-volatile uint8_t year_index = 0;
-//time arrays sums
-volatile uint16_t minute_sum = 0;
-volatile uint16_t hour_sum = 0;
-volatile uint16_t day_sum = 0;
-volatile uint16_t month_sum = 0;
-volatile uint16_t year_sum = 0;
+volatile uint8_t seconds_index = 0;
+volatile uint8_t minutes_index = 0;
+volatile uint8_t hours_index = 0;
+volatile uint8_t days_index = 0;
+volatile uint8_t months_index = 0;
 
 //Function to update the time storage locations
 void update_time_arrays(amp_value amp, amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months) {
   // Update last_seconds
-  last_seconds[minute_index] = amp;
-  minute_sum += amp.current;
-  minute_index++;
+  last_seconds[seconds_index] = amp;
+  seconds_index++;
 
-  if (minute_index == SECONDS_IN_MINUTE) {
+  if (seconds_index == SECONDS_IN_MINUTE) { //1 minute has passed
     // Calculate average for the last minute
-    uint16_t minute_avg = minute_sum / SECONDS_IN_MINUTE;
+    float minute_sum = 0;
+    for(uint8_t i = 0; i < SECONDS_IN_MINUTE; i++){
+      minute_sum += last_seconds[i].current;
+    }
+    float minute_avg = minute_sum / SECONDS_IN_MINUTE;
 
     // Update last_minutes
-    amp_value hour_amp = {minute_avg, measurement_count};
-    last_minutes[hour_index] = hour_amp;
-    hour_sum += minute_avg;
-    hour_index++;
+    amp_value minutes_amp = {minute_avg, measurement_count};
+    last_minutes[minutes_index] = minutes_amp;
+    minutes_index++;
 
-    // Reset minute_sum and minute_index
-    minute_sum = 0;
-    minute_index = 0;
+    // Reset seconds_index
+    seconds_index = 0;
   }
 
-  if (hour_index == MINUTES_IN_HOUR) {
+  if (minutes_index == MINUTES_IN_HOUR) { //1 hour has passed
     // Calculate average for the last hour
-    uint16_t hour_avg = hour_sum / MINUTES_IN_HOUR;
+    float hour_sum = 0;
+    for(uint8_t i = 0; i < MINUTES_IN_HOUR; i++){
+      hour_sum += last_minutes[i].current;
+    }
+    float hour_avg = hour_sum / MINUTES_IN_HOUR;
 
     // Update last_hours
-    amp_value day_amp = {hour_avg, measurement_count};
-    last_hours[day_index] = day_amp;
-    day_sum += hour_avg;
-    day_index++;
+    amp_value hours_amp = {hour_avg, measurement_count};
+    last_hours[hours_index] = hours_amp;
+    hours_index++;
 
-    // Reset hour_sum and hour_index
-    hour_sum = 0;
-    hour_index = 0;
+    // Reset minutes_index
+    minutes_index = 0;
   }
 
-  if (day_index == HOURS_IN_DAY) {
+  if (hours_index == HOURS_IN_DAY) { //1 day has passed
     // Calculate average for the last day
+    float day_sum = 0;
+    for(uint8_t i = 0; i < HOURS_IN_DAY; i++){
+      day_sum += last_hours[i].current;
+    }
     float day_avg = day_sum / HOURS_IN_DAY;
 
     // Update last_days
     amp_value month_amp = {day_avg, measurement_count};
-    last_days[month_index] = month_amp;
-    month_sum += day_avg;
-    month_index++;
+    last_days[days_index] = month_amp;
+    days_index++;
 
-    // Reset day_sum and day_index
-    day_sum = 0;
-    day_index = 0;
+    // Reset hours_index
+    hours_index = 0;
   }
 
-  if (month_index == DAYS_IN_MONTH) {
+  if (days_index == DAYS_IN_MONTH) { //1 month has passed
     // Calculate average for the last month
+    float month_sum = 0;
+    for(uint8_t i = 0; i < DAYS_IN_MONTH; i++){
+      month_sum += last_days[i].current;
+    }
     float month_avg = month_sum / DAYS_IN_MONTH;
 
     // Update last_months
     amp_value year_amp = {month_avg, measurement_count};
-    last_months[year_index] = year_amp;
+    last_months[months_index] = year_amp;
 
-    // Reset month_sum and month_index
-    month_sum = 0;
-    month_index = 0;
+    // Reset month_sum and days_index
+    days_index = 0;
   }
 }
 

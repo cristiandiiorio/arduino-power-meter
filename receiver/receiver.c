@@ -54,7 +54,8 @@ int main(int argc, const char** argv) {
   } 
 
   // query mode TODO
-  else if (mode == 'q') { 
+  else if (mode == 'q') {
+
     UART_send_special_message(fd, mode);
     //TODO: receive all time storage locations and let the user choose which one to query
     
