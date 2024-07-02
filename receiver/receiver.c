@@ -61,16 +61,6 @@ int main(int argc, const char** argv) {
     // Receive all time storage locations
     amp_value amp;
     
-    // Receive and print last_minute_array
-    printf("Last Minute:\n");
-    for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
-      amp = UART_read_amp(fd);
-      print_amp(amp, 0);
-      if ((i + 1) % 6 == 0) printf("\n");
-    }
-    printf("\n--------------------\n");
-    
-    // Receive and print last_hour_array
     printf("Last Hour:\n");
     for (int i = 0; i < MINUTES_IN_HOUR; i++) {
       amp = UART_read_amp(fd);
@@ -78,8 +68,6 @@ int main(int argc, const char** argv) {
       if ((i + 1) % 6 == 0) printf("\n");
     }
     printf("\n--------------------\n");
-
-    // Receive and print last_day_array
     printf("Last Day:\n");
     for (int i = 0; i < HOURS_IN_DAY; i++) {
       amp = UART_read_amp(fd);
@@ -87,8 +75,6 @@ int main(int argc, const char** argv) {
       if ((i + 1) % 6 == 0) printf("\n");
     }
     printf("\n--------------------\n");
-
-    // Receive and print last_month_array
     printf("Last Month:\n");
     for (int i = 0; i < DAYS_IN_MONTH; i++) {
       amp = UART_read_amp(fd);
@@ -96,7 +82,6 @@ int main(int argc, const char** argv) {
       if ((i + 1) % 6 == 0) printf("\n");
     }
     printf("\n--------------------\n");
-    // Receive and print last_year_array
     printf("Last Year:\n");
     for (int i = 0; i < MONTHS_IN_YEAR; i++) {
       amp = UART_read_amp(fd);
@@ -119,7 +104,7 @@ int main(int argc, const char** argv) {
       amp_value amp = UART_read_amp(fd);
       
       //check to see if memory has been cleared
-      if(amp.current == -1){
+      if(amp.current == 13){
         printf("Memory cleared\n");
       }
       else{

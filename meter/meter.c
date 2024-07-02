@@ -172,55 +172,50 @@ int main(void) {
       TCCR3B &= ~((1 << CS32) | (1 << CS31) | (1 << CS30));
 
       if(mode == 'q'){
-        //TODO: send all time storage locations over UART
-        // Send last_seconds
-        for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
-          UART_send_amp_binary(&last_seconds[i]);
-          _delay_ms(5);
-        }
-
         // Send last_minutes
-        for (int i = 0; i < MINUTES_IN_HOUR; i++) {
+        for (uint8_t i = 0; i < MINUTES_IN_HOUR; i++) {
           UART_send_amp_binary(&last_minutes[i]);
           _delay_ms(5);
         }
 
         // Send last_hours
-        for (int i = 0; i < HOURS_IN_DAY; i++) {
+        for (uint8_t i = 0; i < HOURS_IN_DAY; i++) {
           UART_send_amp_binary(&last_hours[i]);
           _delay_ms(5);
         }
 
         // Send last_days
-        for (int i = 0; i < DAYS_IN_MONTH; i++) {
+        for (uint8_t i = 0; i < DAYS_IN_MONTH; i++) {
           UART_send_amp_binary(&last_days[i]);
           _delay_ms(5);
         }
 
         // Send last_months
-        for (int i = 0; i < MONTHS_IN_YEAR; i++) {
+        for (uint8_t i = 0; i < MONTHS_IN_YEAR; i++) {
           UART_send_amp_binary(&last_months[i]);
           _delay_ms(5);
         }
 
       }
       else if(mode == 'c'){
+        disable_interrupts();
         //clears all time storage locations and send confirmation over UART
         memset(last_seconds, 0, sizeof(last_seconds));
         memset(last_minutes, 0, sizeof(last_minutes));
         memset(last_hours, 0, sizeof(last_hours));
         memset(last_days, 0, sizeof(last_days));
         memset(last_months, 0, sizeof(last_months));
-        
-        amp_value amp = {-1, 0}; // -1 indicates memory cleared
+        enable_interrupts();
+
+        amp_value amp = {13, 0}; // 13 indicates memory cleared
         UART_send_amp_binary(&amp); //send confirmation message
       }
       else{ //mode == 'o'
         online_mode_timer_init(mode);
 
-        float max_val = 0;
-        float min_val = 0;
-        float new_val = 0;
+        uint16_t max_val = 0;
+        uint16_t min_val = 0;
+        uint16_t new_val = 0;
         while(1){
           if(sensor_flag){ //measuring every 1000hz
             new_val = adc_read();
@@ -233,7 +228,7 @@ int main(void) {
             sensor_flag = 0; //reset flag
           }
           if(online_flag){ //1000hz interval ended, we send the data calculated
-            float current = calculate_current(min_val, max_val);
+            uint16_t current = calculate_current(min_val, max_val);
             
             amp_value amp = {0, 0};
             amp.current = current;
@@ -254,9 +249,9 @@ int main(void) {
     else{
       detached_mode_timer_init();
       
-      float max_val = 0;
-      float min_val = 0;
-      float new_val = 0;
+      uint16_t max_val = 0;
+      uint16_t min_val = 0;
+      uint16_t new_val = 0;
       while(uart_flag == 0){ //serial not connected 
         if(sensor_flag){ //measuring every 1000hz
           new_val = adc_read();
@@ -269,12 +264,13 @@ int main(void) {
           sensor_flag = 0; //reset flag
         }
         if(timer_flag){
-          float current = calculate_current(min_val, max_val);
+          uint16_t current = calculate_current(min_val, max_val);
           
           amp_value amp = {0, 0};
           amp.current = current;
           amp.timestamp = measurement_count;
 
+          //save amp_value
           update_time_arrays(amp, last_seconds, last_minutes, last_hours, last_days, last_months);
 
           max_val = 0; //reset max value
