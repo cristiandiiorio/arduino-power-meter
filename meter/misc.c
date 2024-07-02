@@ -25,7 +25,7 @@ void adc_init(void) {
 }
 
 //Function to read ADC channel 0
-uint16_t adc_read(void) {
+float adc_read(void) {
   ADMUX = (ADMUX & 0xF8) | 0;  
 
   // Start single conversion
@@ -39,12 +39,12 @@ uint16_t adc_read(void) {
 }
 
 //Function to calculate the calibrated rms current
-uint16_t calculate_current(uint16_t min_val, uint16_t max_val){
-  uint16_t sample = ((max_val - min_val)*5000.0)/1024.0; //5,1024 are the Vref and the ADC resolution
+float calculate_current(float min_val, float max_val){
+  float sample = ((max_val - min_val)*5)/1024; //5,1024 are the Vref and the ADC resolution
   sample = sample * 0.707; //calculate RMS value (0.707 = sqrt(2)/2)
-  uint16_t calibrated_sample = sample * CALIBRATION1 + CALIBRATION2; //calibration
-  //if (calibrated_sample < 0.03) {
-  //  calibrated_sample = 0;
-  //}
+  float calibrated_sample = sample * CALIBRATION1 + CALIBRATION2; //calibration
+  if (calibrated_sample < 0.03) {
+    calibrated_sample = 0;
+  }
   return calibrated_sample;
 }
