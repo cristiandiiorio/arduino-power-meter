@@ -5,13 +5,8 @@
 
 int fd;
 
-void signal_handler(int signum){
-  if(signum == SIGINT){
-    fprintf(stderr,"Exiting program after CTRL+C \n");
-    close(fd);
-    exit(EXIT_SUCCESS);
-  }
-}
+void signal_handler(int signum);
+void print_query();
 
 
 /*
@@ -46,7 +41,7 @@ int main(int argc, const char** argv) {
     //it fits into a byte since it can only go up to 60
     UART_send_special_message(fd, sampling_interval);
 
-    //read from arduino
+    //read data from arduino
     while(1){
       amp_value amp = UART_read_amp(fd);
       print_amp(amp,1);
@@ -55,55 +50,10 @@ int main(int argc, const char** argv) {
 
   // query mode TODO
   else if (mode == 'q') { 
+    // receive all time storage locations
     UART_send_special_message(fd, mode);
-        
-    // Receive all time storage locations
-    amp_value amp;
-    
-    // Receive and print last_minute_array
-    printf("Last Minute:\n");
-    for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
-      amp = UART_read_amp(fd);
-      print_amp(amp, 0);
-      if ((i + 1) % 6 == 0) printf("\n");
-    }
-    printf("\n--------------------\n");
-    
-    // Receive and print last_hour_array
-    printf("Last Hour:\n");
-    for (int i = 0; i < MINUTES_IN_HOUR; i++) {
-      amp = UART_read_amp(fd);
-      print_amp(amp, 0);
-      if ((i + 1) % 6 == 0) printf("\n");
-    }
-    printf("\n--------------------\n");
-
-    // Receive and print last_day_array
-    printf("Last Day:\n");
-    for (int i = 0; i < HOURS_IN_DAY; i++) {
-      amp = UART_read_amp(fd);
-      print_amp(amp, 0);
-      if ((i + 1) % 6 == 0) printf("\n");
-    }
-    printf("\n--------------------\n");
-
-    // Receive and print last_month_array
-    printf("Last Month:\n");
-    for (int i = 0; i < DAYS_IN_MONTH; i++) {
-      amp = UART_read_amp(fd);
-      print_amp(amp, 0);
-      if ((i + 1) % 6 == 0) printf("\n");
-    }
-    printf("\n--------------------\n");
-    // Receive and print last_year_array
-    printf("Last Year:\n");
-    for (int i = 0; i < MONTHS_IN_YEAR; i++) {
-      amp = UART_read_amp(fd);
-      print_amp(amp, 0);
-      if ((i + 1) % 6 == 0) printf("\n");
-    }
-    printf("\n--------------------\n");
-    
+    // print the data received  
+    print_query();
   }
 
   // clearing mode
@@ -112,9 +62,9 @@ int main(int argc, const char** argv) {
     char confirmation = input_confirmation();
     
     if (confirmation == 'Y') {
-      //send special_message to arduino
+      //send special_message to arduino to clear data
       UART_send_special_message(fd, mode);
-      //read from arduino
+      //read response from arduino to check for confirmation
       amp_value amp = UART_read_amp(fd);
       
       //check to see if memory has been cleared
@@ -130,4 +80,59 @@ int main(int argc, const char** argv) {
   close(fd);
 
   return 0;
+}
+
+void signal_handler(int signum){
+  if(signum == SIGINT){
+    fprintf(stderr,"Exiting program after CTRL+C \n");
+    close(fd);
+    exit(EXIT_SUCCESS);
+  }
+}
+
+void print_query(){
+  // Receive and print last_minute_array
+  printf("Last Minute:\n");
+  amp_value amp;
+  for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
+    amp = UART_read_amp(fd);
+    print_amp(amp, 0);
+    if ((i + 1) % 6 == 0) printf("\n");
+  }
+  printf("\n--------------------\n");
+  
+  // Receive and print last_hour_array
+  printf("Last Hour:\n");
+  for (int i = 0; i < MINUTES_IN_HOUR; i++) {
+    amp = UART_read_amp(fd);
+    print_amp(amp, 0);
+    if ((i + 1) % 6 == 0) printf("\n");
+  }
+  printf("\n--------------------\n");
+
+  // Receive and print last_day_array
+  printf("Last Day:\n");
+  for (int i = 0; i < HOURS_IN_DAY; i++) {
+    amp = UART_read_amp(fd);
+    print_amp(amp, 0);
+    if ((i + 1) % 6 == 0) printf("\n");
+  }
+  printf("\n--------------------\n");
+
+  // Receive and print last_month_array
+  printf("Last Month:\n");
+  for (int i = 0; i < DAYS_IN_MONTH; i++) {
+    amp = UART_read_amp(fd);
+    print_amp(amp, 0);
+    if ((i + 1) % 6 == 0) printf("\n");
+  }
+  printf("\n--------------------\n");
+  // Receive and print last_year_array
+  printf("Last Year:\n");
+  for (int i = 0; i < MONTHS_IN_YEAR; i++) {
+    amp = UART_read_amp(fd);
+    print_amp(amp, 0);
+    if ((i + 1) % 6 == 0) printf("\n");
+  }
+  printf("\n--------------------\n");
 }
