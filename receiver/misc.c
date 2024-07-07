@@ -146,7 +146,7 @@ char input_mode(void){
   }
 }
 
-uint8_t input_sampling(void){
+uint8_t get_input_sampling(void){
   char input[4]; //Maximum of 60 seconds ==> 2 chars
   uint8_t sampling_interval;
   printf("Desired sampling interval: ");

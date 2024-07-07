@@ -29,7 +29,7 @@ int main(int argc, const char** argv) {
     // online mode 
     if (mode == 'o') {
       //read from stdin
-      uint8_t sampling_interval = input_sampling();    
+      uint8_t sampling_interval = get_input_sampling();    
       if(sampling_interval == 0){      
         return -1;
       }
@@ -76,7 +76,7 @@ int main(int argc, const char** argv) {
   }
 
   close(fd);
-    
+
   return 0;
 }
 
