@@ -28,3 +28,7 @@ uint8_t input_sampling(void);
 char input_confirmation(void);
 
 void UART_send_special_message(int fd, char msg);
+
+void signal_handler(int signum);
+
+void print_query(int fd);

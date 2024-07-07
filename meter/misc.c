@@ -48,3 +48,37 @@ float calculate_current(float min_val, float max_val){
   }
   return calibrated_sample;
 }
+
+
+
+void query_mode_send(amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months){
+  // Send last_seconds
+  for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
+    UART_send_amp_binary(&last_seconds[i]);
+    _delay_ms(5);
+  }
+
+  // Send last_minutes
+  for (int i = 0; i < MINUTES_IN_HOUR; i++) {
+    UART_send_amp_binary(&last_minutes[i]);
+    _delay_ms(5);
+  }
+
+  // Send last_hours
+  for (int i = 0; i < HOURS_IN_DAY; i++) {
+    UART_send_amp_binary(&last_hours[i]);
+    _delay_ms(5);
+  }
+
+  // Send last_days
+  for (int i = 0; i < DAYS_IN_MONTH; i++) {
+    UART_send_amp_binary(&last_days[i]);
+    _delay_ms(5);
+  }
+
+  // Send last_months
+  for (int i = 0; i < MONTHS_IN_YEAR; i++) {
+    UART_send_amp_binary(&last_months[i]);
+    _delay_ms(5);
+  }
+}

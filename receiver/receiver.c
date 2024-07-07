@@ -5,10 +5,6 @@
 
 int fd;
 
-void signal_handler(int signum);
-void print_query();
-
-
 /*
   receiver /dev/ttyUSB0 19200
 */
@@ -26,61 +22,64 @@ int main(int argc, const char** argv) {
   serial_set_interface_attribs(fd, BAUDRATE, 0);
   serial_set_blocking(fd, blocking_status);
 
-  //read from stdin
-  char mode = input_mode();
-
-  // online mode 
-  if (mode == 'o') {
+  while(1){
     //read from stdin
-    uint8_t sampling_interval = input_sampling();    
-    if(sampling_interval == 0){      
-      return -1;
-    }
+    char mode = input_mode();
 
-    //send sampling_interval itself, 
-    //it fits into a byte since it can only go up to 60
-    UART_send_special_message(fd, sampling_interval);
-
-    //read data from arduino
-    while(1){
-      amp_value amp = UART_read_amp(fd);
-      print_amp(amp,1);
-    }
-  } 
-
-  // query mode TODO
-  else if (mode == 'q') { 
-    // receive all time storage locations
-    UART_send_special_message(fd, mode);
-    // print the data received  
-    print_query();
-  }
-
-  // clearing mode
-  else if (mode == 'c') {
-    //read from stdin
-    char confirmation = input_confirmation();
-    
-    if (confirmation == 'Y') {
-      //send special_message to arduino to clear data
-      UART_send_special_message(fd, mode);
-      //read response from arduino to check for confirmation
-      amp_value amp = UART_read_amp(fd);
-      
-      //check to see if memory has been cleared
-      if(amp.current == -1){
-        printf("Memory cleared\n");
+    // online mode 
+    if (mode == 'o') {
+      //read from stdin
+      uint8_t sampling_interval = input_sampling();    
+      if(sampling_interval == 0){      
+        return -1;
       }
-      else{
-        printf("Memory not cleared\n");
+
+      //send sampling_interval itself, 
+      //it fits into a byte since it can only go up to 60
+      UART_send_special_message(fd, sampling_interval);
+
+      //read data from arduino
+      while(1){
+        amp_value amp = UART_read_amp(fd);
+        print_amp(amp,1);
+      }
+    } 
+
+    // query mode TODO
+    else if (mode == 'q') { 
+      // receive all time storage locations
+      UART_send_special_message(fd, mode);
+      // print the data received  
+      print_query(fd);
+    }
+
+    // clearing mode
+    else if (mode == 'c') {
+      //read from stdin
+      char confirmation = input_confirmation();
+      
+      if (confirmation == 'Y') {
+        //send special_message to arduino to clear data
+        UART_send_special_message(fd, mode);
+        //read response from arduino to check for confirmation
+        amp_value amp = UART_read_amp(fd);
+        
+        //check to see if memory has been cleared
+        if(amp.current == -1){
+          printf("Memory cleared\n");
+        }
+        else{
+          printf("Memory not cleared\n");
+        }
       }
     }
   }
 
   close(fd);
-
+    
   return 0;
 }
+
 
 void signal_handler(int signum){
   if(signum == SIGINT){
@@ -90,49 +89,3 @@ void signal_handler(int signum){
   }
 }
 
-void print_query(){
-  // Receive and print last_minute_array
-  printf("Last Minute:\n");
-  amp_value amp;
-  for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
-    amp = UART_read_amp(fd);
-    print_amp(amp, 0);
-    if ((i + 1) % 6 == 0) printf("\n");
-  }
-  printf("\n--------------------\n");
-  
-  // Receive and print last_hour_array
-  printf("Last Hour:\n");
-  for (int i = 0; i < MINUTES_IN_HOUR; i++) {
-    amp = UART_read_amp(fd);
-    print_amp(amp, 0);
-    if ((i + 1) % 6 == 0) printf("\n");
-  }
-  printf("\n--------------------\n");
-
-  // Receive and print last_day_array
-  printf("Last Day:\n");
-  for (int i = 0; i < HOURS_IN_DAY; i++) {
-    amp = UART_read_amp(fd);
-    print_amp(amp, 0);
-    if ((i + 1) % 6 == 0) printf("\n");
-  }
-  printf("\n--------------------\n");
-
-  // Receive and print last_month_array
-  printf("Last Month:\n");
-  for (int i = 0; i < DAYS_IN_MONTH; i++) {
-    amp = UART_read_amp(fd);
-    print_amp(amp, 0);
-    if ((i + 1) % 6 == 0) printf("\n");
-  }
-  printf("\n--------------------\n");
-  // Receive and print last_year_array
-  printf("Last Year:\n");
-  for (int i = 0; i < MONTHS_IN_YEAR; i++) {
-    amp = UART_read_amp(fd);
-    print_amp(amp, 0);
-    if ((i + 1) % 6 == 0) printf("\n");
-  }
-  printf("\n--------------------\n");
-}

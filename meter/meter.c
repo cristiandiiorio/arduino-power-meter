@@ -17,12 +17,6 @@ volatile uint8_t hours_index = 0;
 volatile uint8_t days_index = 0;
 volatile uint8_t months_index = 0;
 
-void sampling_timer_init(void);
-void online_mode_timer_init(uint8_t mode);
-void detached_mode_timer_init(void);
-void update_time_arrays(amp_value amp, amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months);
-void query_mode_send( amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months);
-
 ISR(TIMER1_COMPA_vect) { //1000hz timer for sampling
   sensor_flag = 1;
 }
@@ -52,12 +46,18 @@ int main(void) {
 
   DDRB |= (1 << PB7);  //set LED_PIN as an output
 
-  //time storage locations
+  //time arrays
   amp_value last_seconds[SECONDS_IN_MINUTE]; // contains amp_values for the last 60 seconds
   amp_value last_minutes[MINUTES_IN_HOUR]; // contains amp_values for the last 60 minutes
   amp_value last_hours[HOURS_IN_DAY]; // contains amp_values for the last 24 hours
   amp_value last_days[DAYS_IN_MONTH]; // contains amp_values for the last 30 days
   amp_value last_months[MONTHS_IN_YEAR]; // contains amp_values for the last 12 months
+  //clear all time arrays
+  memset(last_seconds, 0, sizeof(last_seconds));
+  memset(last_minutes, 0, sizeof(last_minutes));
+  memset(last_hours, 0, sizeof(last_hours));
+  memset(last_days, 0, sizeof(last_days));
+  memset(last_months, 0, sizeof(last_months));
 
   while (1) {
     //USER MODE
@@ -72,7 +72,7 @@ int main(void) {
         query_mode_send(last_seconds, last_minutes, last_hours, last_days, last_months);
       }
       else if(mode == 'c'){
-        //clears all time storage locations and send confirmation over UART
+        //clears all time arrays and send confirmation over UART
         memset(last_seconds, 0, sizeof(last_seconds));
         memset(last_minutes, 0, sizeof(last_minutes));
         memset(last_hours, 0, sizeof(last_hours));
@@ -161,6 +161,7 @@ int main(void) {
 }
 
 
+
 void sampling_timer_init(void){
   TCCR1A = 0;
   TCCR1B = (1 << WGM12) | (1 << CS11) | (1 << CS10); // set up timer with prescaler = 1024
@@ -195,7 +196,7 @@ void detached_mode_timer_init(void){
 }
 
 
-//Function to update the time storage locations
+//Function to update the time arrays
 void update_time_arrays(amp_value amp, amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months) {
   // Update last_seconds
   last_seconds[seconds_index] = amp;
@@ -266,37 +267,5 @@ void update_time_arrays(amp_value amp, amp_value* last_seconds, amp_value* last_
 
     // Reset month_sum and days_index
     days_index = 0;
-  }
-}
-
-void query_mode_send( amp_value* last_seconds, amp_value* last_minutes, amp_value* last_hours, amp_value* last_days, amp_value* last_months){
-  // Send last_seconds
-  for (int i = 0; i < SECONDS_IN_MINUTE; i++) {
-    UART_send_amp_binary(&last_seconds[i]);
-    _delay_ms(5);
-  }
-
-  // Send last_minutes
-  for (int i = 0; i < MINUTES_IN_HOUR; i++) {
-    UART_send_amp_binary(&last_minutes[i]);
-    _delay_ms(5);
-  }
-
-  // Send last_hours
-  for (int i = 0; i < HOURS_IN_DAY; i++) {
-    UART_send_amp_binary(&last_hours[i]);
-    _delay_ms(5);
-  }
-
-  // Send last_days
-  for (int i = 0; i < DAYS_IN_MONTH; i++) {
-    UART_send_amp_binary(&last_days[i]);
-    _delay_ms(5);
-  }
-
-  // Send last_months
-  for (int i = 0; i < MONTHS_IN_YEAR; i++) {
-    UART_send_amp_binary(&last_months[i]);
-    _delay_ms(5);
   }
 }
