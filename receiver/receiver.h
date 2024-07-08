@@ -8,6 +8,9 @@
 
 #include "../avr_common/common.h"
 
+#define blocking_status 1
+#define BAUDRATE 19200
+
 // returns the descriptor of a serial port
 int serial_open(const char* name);
 

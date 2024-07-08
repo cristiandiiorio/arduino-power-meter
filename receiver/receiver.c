@@ -1,9 +1,7 @@
 #include "receiver.h"
 
-#define blocking_status 1
-#define BAUDRATE 19200
-
 int fd;
+const char* serial_device;
 
 /*
   receiver /dev/ttyUSB0 19200
@@ -15,8 +13,8 @@ int main(int argc, const char** argv) {
     printf("receiver <serial_file>\n");
     return -1;
   }
-  const char* serial_device = argv[1];
-  
+  serial_device = argv[1];
+
   //serial setup
   fd = serial_open(serial_device);
   serial_set_interface_attribs(fd, BAUDRATE, 0);
@@ -46,8 +44,8 @@ int main(int argc, const char** argv) {
     } 
 
     // query mode TODO
-    else if (mode == 'q') { 
-      // receive all time storage locations
+    else if (mode == 'q') {
+      // receive all time arrays
       UART_send_special_message(fd, mode);
       // print the data received  
       print_query(fd);
@@ -84,6 +82,8 @@ int main(int argc, const char** argv) {
 void signal_handler(int signum){
   if(signum == SIGINT){
     fprintf(stderr,"Exiting program after CTRL+C \n");
+    close(fd);
+    fd = serial_open(serial_device);
     close(fd);
     exit(EXIT_SUCCESS);
   }
